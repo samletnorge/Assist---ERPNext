@@ -1,15 +1,157 @@
 # New Tools Summary - Update
 
-This document describes the 4 new tools added based on user feedback.
+This document describes the new tools added based on user feedback.
 
 ## Overview
 
-Following the feedback from @minfuel, we've added 4 powerful new tools to ERPNext Assist:
+Following feedback from users, we've added powerful new tools to ERPNext Assist:
 
 1. **Receipt Scanner** - OCR-powered automatic item addition
 2. **Price Comparison** - Prisjakt.no integration with vendor catalogs
 3. **Natural Language Voice Queries** - Spoken inventory questions
 4. **Pickup Route Orchestration** - Enhanced marketplace tool
+5. **Asset Rental Posting** - NEW! Post company assets to rental services like leid.no
+
+## Tool 7: Asset Rental Posting 🛠️💰
+
+**Purpose**: Post company-owned assets (tools, equipment) to rental services like leid.no
+
+**MCP Tools**: 
+- `post_asset_for_rental()` - Post assets to rental marketplaces
+- `get_rental_eligible_assets()` - Query assets suitable for rental
+
+**API Endpoints**: 
+- `erpnext_assist.api.post_rental_listing` - Post asset for rental
+- `erpnext_assist.api.get_rental_assets` - Get rental-eligible assets
+
+**Features**:
+- Post company-owned assets to leid.no and other rental services
+- Automatic identification of rental-eligible assets by chart of account codes
+- Support for Norwegian accounting standards (NS 4102):
+  - 1202 - Maskiner og anlegg (Machinery and equipment)
+  - 1203 - Inventar (Furniture and fixtures)
+  - 1204 - Transportmidler (Transport equipment)
+- Track rental listings separately from sales
+- Set rental rates and terms
+
+**Marketplace Listing Enhancements**:
+- New "Listing Type" field: Sale or Rental
+- New "Asset Code" field for linking assets
+- New marketplace options: leid.no, Other Rental Service
+- New status: "Rented" for tracking rental agreements
+- Conditional display: Item Code for Sales, Asset Code for Rentals
+
+**Parameters for `post_asset_for_rental()`**:
+- `asset_code` (str): ERPNext asset code to rent out
+- `marketplace` (str): Target rental service (e.g., "leid.no")
+- `title` (str): Listing title
+- `description` (str): Detailed description
+- `rental_rate` (float): Rate per period (day/week/month)
+- `images` (list, optional): Asset images
+
+**Parameters for `get_rental_eligible_assets()`**:
+- `company` (str, optional): Company name
+- `asset_category` (str, optional): Filter by category
+- `chart_of_account_code` (str, optional): Filter by account code (e.g., "1202")
+
+**Returns from `get_rental_eligible_assets()`**:
+```json
+{
+    "success": true,
+    "company": "My Company",
+    "count": 5,
+    "assets": [
+        {
+            "asset_code": "DRILL-HYD-001",
+            "asset_name": "Hydraulic Drill",
+            "item_code": "DRILL-001",
+            "category": "Machinery",
+            "purchase_amount": 15000.00,
+            "location": "Main Warehouse",
+            "status": "Available for use"
+        }
+    ]
+}
+```
+
+**Usage Examples**:
+
+```python
+# Get all machinery suitable for rental (account code 1202)
+from erpnext_assist.mcp_server.server import get_rental_eligible_assets
+
+result = get_rental_eligible_assets(
+    company="My Company",
+    chart_of_account_code="1202"  # Maskiner og anlegg
+)
+
+for asset in result["assets"]:
+    print(f"{asset['asset_name']} - {asset['category']}")
+
+# Post an asset to leid.no
+from erpnext_assist.mcp_server.server import post_asset_for_rental
+
+result = post_asset_for_rental(
+    asset_code="DRILL-HYD-001",
+    marketplace="leid.no",
+    title="Professional Hydraulic Drill for Rent",
+    description="High-power drill for heavy construction. Daily and weekly rates available.",
+    rental_rate=750.00,  # NOK per day
+    images=["/files/drill1.jpg", "/files/drill2.jpg"]
+)
+```
+
+**From UI/API**:
+```javascript
+// Get rental assets
+frappe.call({
+    method: "erpnext_assist.api.get_rental_assets",
+    args: {
+        company: "My Company",
+        chart_of_account_code: "1202"
+    },
+    callback: function(r) {
+        console.log(r.message.assets);
+    }
+});
+
+// Post rental listing
+frappe.call({
+    method: "erpnext_assist.api.post_rental_listing",
+    args: {
+        asset_code: "DRILL-HYD-001",
+        marketplace: "leid.no",
+        title: "Professional Hydraulic Drill",
+        description: "Available for daily/weekly rental",
+        rental_rate: 750.00,
+        images: JSON.stringify(["/files/drill1.jpg"])
+    }
+});
+```
+
+**Use Cases**:
+1. **Equipment Rental Business**: Post company tools to rental platforms
+2. **Asset Utilization**: Monetize idle assets through rentals
+3. **Seasonal Equipment**: Rent out equipment during off-peak seasons
+4. **Tool Sharing**: Make company tools available to partners/contractors
+
+**Chart of Account Code Reference** (Norwegian NS 4102):
+- **1202** - Maskiner og anlegg (Machinery and equipment)
+  - Construction equipment, industrial machinery
+- **1203** - Inventar (Furniture and fixtures)
+  - Office furniture, fixtures, tools
+- **1204** - Transportmidler (Transport equipment)
+  - Vehicles, trailers, transport tools
+
+**Implementation Notes**:
+- Validates listing type (Sale vs Rental)
+- Conditional field display in UI
+- Filters assets by account codes
+- Tracks rental status separately
+- Integration with ERPNext Asset module
+- Supports multiple rental platforms
+
+---
 
 ## Tool 4: Receipt Scanner 📸🧾
 
@@ -294,6 +436,8 @@ Code:
 | `erpnext_assist.api.compare_prices` | POST | Compare vendor prices |
 | `erpnext_assist.api.ask_inventory` | POST | Natural language queries |
 | `erpnext_assist.api.plan_pickup_route` | POST | Optimize pickup routes |
+| `erpnext_assist.api.get_rental_assets` | POST | Get rental-eligible assets |
+| `erpnext_assist.api.post_rental_listing` | POST | Post asset to rental service |
 
 ## Requirements
 
