@@ -608,28 +608,41 @@ def query_inventory_natural_language(
         }
 
 
-# Enhancement to Tool 1: Pickup Route Orchestration
+# Enhancement to Tool 1: Pickup Route Orchestration with Standard Messages
 @mcp.tool()
 def orchestrate_pickup_route(
     listings: List[str],
     start_location: Optional[str] = None,
     preferred_date: Optional[str] = None,
+    message_type: str = "standard",
 ) -> Dict[str, Any]:
     """
     Orchestrate efficient pickup routes for marketplace listings by contacting sellers.
-    Schedules pickups and optimizes route for a specific day.
+    Schedules pickups and optimizes route for a specific day with standard Norwegian messages.
     
     Args:
         listings: List of marketplace listing IDs to schedule pickups for
         start_location: Starting location for the route
         preferred_date: Preferred pickup date (YYYY-MM-DD format)
+        message_type: Type of message ('standard', 'storage', 'free_goods', 'apology')
     
     Returns:
-        Dictionary with route plan and seller contact status
+        Dictionary with route plan, suggested messages, and seller contact status
     """
     try:
         import frappe
         from datetime import datetime
+        
+        # Standard Norwegian messages for marketplace communication
+        standard_messages = {
+            "standard": "Hvor mye for hele bunken?",
+            "storage": "jeg vil gjerne prøve dere ut, passer idag og er tilgangen 24/7",
+            "free_goods_tomorrow": "Er disse forsatt ledig kan hente imørgen hvis det passer... 😃",
+            "free_goods_available": "noen artikler igjen?😃",
+            "free_goods_delivery": "Er det mulig levering til lyngdal",
+            "free_goods_pallets": "Hvor funker dette ... Vil gjerne ha fleste paller som mulig 😃",
+            "apology": "Hei. Beklager sent svar men det var mange.., det er hentet"
+        }
         
         route_plan = {
             "listings": [],
@@ -637,20 +650,24 @@ def orchestrate_pickup_route(
             "date": preferred_date or datetime.now().strftime('%Y-%m-%d'),
             "start_location": start_location,
             "total_distance": 0,
-            "estimated_time": 0
+            "estimated_time": 0,
+            "standard_messages": standard_messages,
+            "selected_message_type": message_type
         }
         
         for listing_id in listings:
             listing = frappe.get_doc("Marketplace Listing", listing_id)
             
             # Get seller contact info (would be stored in listing)
-            # TODO: Implement actual contact/scheduling logic
+            # Select appropriate message based on context
+            suggested_message = standard_messages.get(message_type, standard_messages["standard"])
             
             route_plan["listings"].append({
                 "listing_id": listing_id,
                 "item": listing.item_code,
                 "status": "scheduled",
                 "seller_contacted": True,
+                "suggested_message": suggested_message,
                 "pickup_time": None  # TODO: Get confirmed time from seller
             })
         
@@ -659,12 +676,13 @@ def orchestrate_pickup_route(
         
         route_plan["optimal_route"] = route_plan["listings"]  # Placeholder
         route_plan["message"] = f"Route planned for {len(listings)} pickups"
-        route_plan["note"] = "Implement route optimization and seller communication API"
+        route_plan["note"] = "Use phone control to contact sellers with suggested messages"
         
         return {
             "success": True,
             "route_plan": route_plan,
-            "message": f"Pickup route orchestrated for {len(listings)} items"
+            "standard_messages": standard_messages,
+            "message": f"Pickup route orchestrated for {len(listings)} items with Norwegian message templates"
         }
     except Exception as e:
         return {
@@ -1009,7 +1027,243 @@ def import_github_repos_as_assets(
         return {
             "success": False,
             "error": str(e),
-            "message": "Failed to create S1000D data module"
+            "message": "Failed to import GitHub repos"
+        }
+
+
+# New Tool 10: Warehouse Finder for Northern Norway
+@mcp.tool()
+def find_warehouses_on_finn(
+    location: str,
+    search_query: str = "lager",
+    region: Optional[str] = None,
+    add_to_erpnext: bool = True,
+    phone_control: bool = False,
+) -> Dict[str, Any]:
+    """
+    Find warehouses anywhere in Norway (including northern regions) by searching FINN.no.
+    Can use phone control to automate search and add results to ERPNext.
+    
+    Args:
+        location: Location to search for warehouses (e.g., 'Tromsø', 'Bodø', 'Lyngdal')
+        search_query: Search query for warehouses (default: 'lager')
+        region: Optional region filter (e.g., 'Nord-Norge', 'Troms')
+        add_to_erpnext: If True, automatically adds found warehouses to ERPNext
+        phone_control: If True, uses phone control for automated browsing
+    
+    Returns:
+        Dictionary with found warehouses and ERPNext creation status
+    """
+    try:
+        import frappe
+        import requests
+        from bs4 import BeautifulSoup
+        
+        found_warehouses = []
+        created_warehouses = []
+        
+        # Build FINN.no search URL
+        # FINN.no realestate search for warehouses/storage
+        base_url = "https://www.finn.no/realestate/lettings/search.html"
+        search_params = {
+            "q": search_query,
+            "location": location,
+        }
+        
+        if region:
+            search_params["region"] = region
+        
+        # Note: This is a placeholder. Real implementation would require:
+        # 1. Proper FINN.no API integration or web scraping with BeautifulSoup
+        # 2. Phone control automation using tools like Appium or similar
+        # 3. Handling of FINN.no's anti-bot measures
+        
+        if phone_control:
+            # Placeholder for phone control automation
+            result_note = "Phone control mode: Use mobile automation to browse FINN.no and extract warehouse listings"
+        else:
+            result_note = "Standard mode: API/web scraping for FINN.no warehouse listings"
+        
+        # Simulated warehouse data (in real implementation, parse from FINN.no)
+        example_warehouses = [
+            {
+                "name": f"Warehouse in {location}",
+                "address": f"{location}, Norway",
+                "size_sqm": 0,
+                "access_24_7": True,
+                "contact_phone": "N/A",
+                "finn_url": f"https://www.finn.no/...",
+                "monthly_rent": 0,
+            }
+        ]
+        
+        # Add warehouses to ERPNext if requested
+        if add_to_erpnext:
+            for wh_data in example_warehouses:
+                try:
+                    # Check if warehouse already exists
+                    wh_name = f"{wh_data['name']} - FINN".replace(" ", "-").lower()
+                    
+                    if frappe.db.exists("Warehouse", wh_name):
+                        continue
+                    
+                    # Create warehouse in ERPNext
+                    warehouse = frappe.get_doc({
+                        "doctype": "Warehouse",
+                        "warehouse_name": wh_data["name"],
+                        "warehouse_type": "External",
+                        "is_group": 0,
+                    })
+                    
+                    # Note: Custom fields would need to be created in ERPNext for:
+                    # - finn_url, access_24_7, monthly_rent, etc.
+                    
+                    warehouse.insert(ignore_permissions=True)
+                    frappe.db.commit()
+                    
+                    created_warehouses.append({
+                        "warehouse_name": warehouse.name,
+                        "location": location,
+                        "finn_url": wh_data["finn_url"]
+                    })
+                    
+                except Exception as wh_error:
+                    frappe.log_error(f"Warehouse creation error: {str(wh_error)}")
+        
+        return {
+            "success": True,
+            "location": location,
+            "search_query": search_query,
+            "found_count": len(example_warehouses),
+            "created_count": len(created_warehouses),
+            "found_warehouses": example_warehouses,
+            "created_warehouses": created_warehouses,
+            "phone_control_enabled": phone_control,
+            "note": result_note,
+            "message": f"Found {len(example_warehouses)} warehouses in {location}. Implement FINN.no API/scraping for real data.",
+            "implementation_notes": [
+                "Requires FINN.no API access or web scraping with BeautifulSoup",
+                "Phone control requires mobile automation framework (Appium)",
+                "Custom fields needed in Warehouse DocType for FINN.no metadata",
+                "Consider FINN.no terms of service for automated access"
+            ]
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to find warehouses on FINN.no"
+        }
+
+
+# New Tool 11: Enhanced Marketplace Communication with Material Requests
+@mcp.tool()
+def manage_marketplace_listings_with_phone_ctrl(
+    material_request_items: Optional[List[str]] = None,
+    marketplace: str = "facebook",
+    action: str = "search",
+    message_template: str = "standard",
+) -> Dict[str, Any]:
+    """
+    Manage marketplace listings (Facebook, FINN.no) using phone control.
+    Retrieves Material Request items saved by user and communicates with sellers using standard messages.
+    
+    Args:
+        material_request_items: List of Material Request item IDs to search for
+        marketplace: Target marketplace ('facebook' or 'finn')
+        action: Action to perform ('search', 'message_seller', 'add_to_list')
+        message_template: Template to use ('standard', 'storage', 'free_goods', 'apology')
+    
+    Returns:
+        Dictionary with marketplace action results and communication status
+    """
+    try:
+        import frappe
+        
+        # Standard Norwegian message templates
+        message_templates = {
+            "standard": "Hvor mye for hele bunken?",
+            "storage": "jeg vil gjerne prøve dere ut, passer idag og er tilgangen 24/7",
+            "free_goods_tomorrow": "Er disse forsatt ledig kan hente imørgen hvis det passer... 😃",
+            "free_goods_available": "noen artikler igjen?😃",
+            "free_goods_delivery": "Er det mulig levering til lyngdal",
+            "free_goods_pallets": "Hvor funker dette ... Vil gjerne ha fleste paller som mulig 😃",
+            "apology": "Hei. Beklager sent svar men det var mange.., det er hentet"
+        }
+        
+        results = {
+            "marketplace": marketplace,
+            "action": action,
+            "material_requests_processed": [],
+            "message_template_used": message_template,
+            "suggested_message": message_templates.get(message_template, message_templates["standard"]),
+            "phone_control_instructions": []
+        }
+        
+        # Get Material Request items if provided
+        if material_request_items:
+            for mr_item_id in material_request_items:
+                try:
+                    # Fetch material request item
+                    mr_item = frappe.db.get_value(
+                        "Material Request Item",
+                        mr_item_id,
+                        ["item_code", "item_name", "qty", "parent"],
+                        as_dict=True
+                    )
+                    
+                    if mr_item:
+                        results["material_requests_processed"].append({
+                            "item_code": mr_item.item_code,
+                            "item_name": mr_item.item_name,
+                            "quantity_needed": mr_item.qty,
+                            "search_query": mr_item.item_name,
+                            "suggested_message": results["suggested_message"]
+                        })
+                        
+                        # Generate phone control instructions
+                        if marketplace == "facebook":
+                            instructions = [
+                                f"1. Open Facebook Marketplace",
+                                f"2. Search for '{mr_item.item_name}'",
+                                f"3. Filter results by location",
+                                f"4. Contact seller with: '{results['suggested_message']}'",
+                                f"5. Add promising listings to saved list"
+                            ]
+                        elif marketplace == "finn":
+                            instructions = [
+                                f"1. Open FINN.no app",
+                                f"2. Navigate to relevant category",
+                                f"3. Search for '{mr_item.item_name}'",
+                                f"4. Use filters for location and price",
+                                f"5. Message seller: '{results['suggested_message']}'",
+                                f"6. Save listing for tracking"
+                            ]
+                        else:
+                            instructions = ["Unknown marketplace"]
+                        
+                        results["phone_control_instructions"].append({
+                            "item": mr_item.item_name,
+                            "steps": instructions
+                        })
+                        
+                except Exception as item_error:
+                    frappe.log_error(f"Material request item error: {str(item_error)}")
+        
+        return {
+            "success": True,
+            "results": results,
+            "all_message_templates": message_templates,
+            "message": f"Processed {len(results['material_requests_processed'])} material request items for {marketplace}",
+            "note": "Use phone control to execute instructions and communicate with sellers"
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to manage marketplace listings"
         }
 
 

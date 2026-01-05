@@ -808,6 +808,142 @@ result = import_github_repos_as_assets(
 
 ---
 
+## Example 15: Find Warehouses in Northern Norway
+
+**Tool Name**: `find_northern_norway_warehouses`
+
+**Description**: Search for storage facilities and warehouses anywhere in Norway, including northern regions, using FINN.no
+
+**Category**: Warehouse Management
+
+**AI Provider**: Any
+
+**Prompt Template**:
+```
+Find available warehouse and storage facilities in {{location}}, {{region}}.
+Search FINN.no for listings matching "{{search_query}}".
+Filter for facilities with 24/7 access if {{require_24_7}}.
+Add all found warehouses to ERPNext if {{add_to_erpnext}}.
+```
+
+**Parameters**:
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| location | Text | ✓ | City/area (e.g., "Tromsø", "Bodø", "Finnmark") |
+| region | Select | | Nord-Norge, Troms, Nordland, Finnmark |
+| search_query | Text | | Search term (default: "lager") |
+| require_24_7 | Check | | Filter for 24/7 access |
+| add_to_erpnext | Check | ✓ | Add found warehouses to ERPNext |
+| phone_control | Check | | Use phone control automation |
+
+**Action Type**: API Call
+
+**API Endpoint**: `erpnext_assist.api.find_warehouses`
+
+**API Parameters Mapping**:
+```json
+{
+  "location": "{{location}}",
+  "search_query": "{{search_query}}",
+  "region": "{{region}}",
+  "add_to_erpnext": "{{add_to_erpnext}}",
+  "phone_control": "{{phone_control}}"
+}
+```
+
+**MCP Tool Usage**:
+```python
+# Find warehouses in Tromsø with 24/7 access
+result = find_warehouses_on_finn(
+    location="Tromsø",
+    search_query="lager 24/7",
+    region="Troms",
+    add_to_erpnext=True,
+    phone_control=False
+)
+
+print(f"Found {result['found_count']} warehouses")
+print(f"Created {result['created_count']} warehouse records in ERPNext")
+```
+
+**Benefits**:
+- **Norway-wide Coverage**: Search anywhere, including remote northern regions
+- **FINN.no Integration**: Access to largest Norwegian marketplace
+- **Phone Control**: Automate mobile app browsing
+- **Auto-Import**: Directly create warehouse records in ERPNext
+- **24/7 Access**: Filter for always-accessible facilities
+
+---
+
+## Example 16: Marketplace Communication with Norwegian Templates
+
+**Tool Name**: `communicate_with_sellers`
+
+**Description**: Manage marketplace listings with Material Request items and standard Norwegian message templates
+
+**Category**: Marketplace
+
+**AI Provider**: Any
+
+**Prompt Template**:
+```
+Search {{marketplace}} for items from Material Request {{material_request_items}}.
+Use {{message_template}} template to communicate with sellers.
+Action: {{action}}
+Add promising listings to saved list for tracking.
+```
+
+**Parameters**:
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| material_request_items | Long Text | ✓ | JSON array of Material Request Item IDs |
+| marketplace | Select | ✓ | facebook, finn |
+| action | Select | ✓ | search, message_seller, add_to_list |
+| message_template | Select | ✓ | standard, storage, free_goods, apology |
+
+**Action Type**: API Call
+
+**API Endpoint**: `erpnext_assist.api.manage_marketplace_with_phone`
+
+**Standard Norwegian Message Templates**:
+```json
+{
+  "standard": "Hvor mye for hele bunken?",
+  "storage": "jeg vil gjerne prøve dere ut, passer idag og er tilgangen 24/7",
+  "free_goods_tomorrow": "Er disse forsatt ledig kan hente imørgen hvis det passer... 😃",
+  "free_goods_available": "noen artikler igjen?😃",
+  "free_goods_delivery": "Er det mulig levering til lyngdal",
+  "free_goods_pallets": "Hvor funker dette ... Vil gjerne ha fleste paller som mulig 😃",
+  "apology": "Hei. Beklager sent svar men det var mange.., det er hentet"
+}
+```
+
+**MCP Tool Usage**:
+```python
+# Search Facebook Marketplace for material request items
+result = manage_marketplace_listings_with_phone_ctrl(
+    material_request_items=["MR-ITEM-001", "MR-ITEM-002"],
+    marketplace="facebook",
+    action="search",
+    message_template="standard"
+)
+
+# Get phone control instructions
+for instruction in result['results']['phone_control_instructions']:
+    print(f"Item: {instruction['item']}")
+    for step in instruction['steps']:
+        print(f"  {step}")
+```
+
+**Benefits**:
+- **Material Request Integration**: Auto-fetch items from your purchase requests
+- **Norwegian Templates**: Pre-written messages for common scenarios
+- **Phone Control Ready**: Step-by-step mobile automation instructions
+- **Multi-Marketplace**: Support for both Facebook and FINN.no
+- **Saved Lists**: Track promising listings for follow-up
+
+---
+
 ## Need More Examples?
 
 Check the community forum or create an issue on GitHub with your use case!

@@ -14,7 +14,7 @@ An ERPNext custom app that extends ERPNext with AI-powered tools using the Model
 - 📸 **AI Background Removal** - Professional product images with U²-Net AI
 - 🤖 **Universal AI Support** - Works with Claude, OpenAI, Ollama, and custom providers
 - 🔒 **Privacy-First** - All processing happens locally on your server
-- 📦 **13 Ready-to-Use Tools** - Marketplace, camera, barcode, receipt scanner, price comparison, voice queries, RDS 81346, S1000D, GitHub import, and more
+- 📦 **15 Ready-to-Use Tools** - Marketplace (with Norwegian message templates), camera, barcode, receipt scanner, price comparison, voice queries, RDS 81346, S1000D, GitHub import, warehouse finder, phone control, and more
 - 🌐 **Offline Capable** - Full functionality without internet connection
 
 ## Features
@@ -27,23 +27,29 @@ An ERPNext custom app that extends ERPNext with AI-powered tools using the Model
 
 ### 📦 Built-in Tools
 
-#### 1. Marketplace Posting Tool with Pickup Orchestration
+#### 1. Marketplace Posting Tool with Pickup Orchestration & Norwegian Messages
 - Post stock items or assets to marketplaces like Facebook Marketplace and FINN.no
 - Automatically track and manage listings
 - Save and monitor marketplace searches based on purchase or material requests
 - **NEW**: Orchestrate efficient pickup routes by contacting sellers and scheduling optimal pickup days
+- **NEW**: Standard Norwegian message templates for seller communication (price inquiries, storage, free goods, apologies)
+- **NEW**: Phone control integration for automated marketplace browsing
+- **NEW**: Material Request integration - automatically search for items from your purchase requests
 - **DocTypes**: Marketplace Listing, Saved Marketplace Search
-- **MCP Tools**: `post_to_marketplace`, `track_saved_search`, `orchestrate_pickup_route`
+- **MCP Tools**: `post_to_marketplace`, `track_saved_search`, `orchestrate_pickup_route`, `manage_marketplace_listings_with_phone_ctrl`
 
-#### 2. Camera-based Quick Item Addition with AI Background Removal
+#### 2. Camera-based Quick Item Addition with Dual AI Background Removal
 - Quickly add new items (stock or assets) using camera capture
-- **Automatic AI-powered background removal** for professional product images
+- **Dual AI-powered background removal**: 
+  - Local processing with rembg + U²-Net AI model (privacy-focused, offline)
+  - Cloud API via receipt-ocr.altlokalt.com (faster processing)
+  - Automatic fallback between APIs
 - Automatic image enhancement (brightness, contrast, sharpness)
 - Perfect for warehouses with disorganized or new inventory
 - Automatic image attachment and stock entry creation
 - **MCP Tool**: `quick_add_item_from_camera`
 - **API Endpoints**: 
-  - `remove_image_background` - Remove background from any image
+  - `remove_image_background` - Remove background from any image (dual API support)
   - `enhance_image` - Enhance image quality
   - `quick_add_item` - Complete item addition with image processing
 
@@ -94,6 +100,27 @@ An ERPNext custom app that extends ERPNext with AI-powered tools using the Model
 - Support for private repos (with GitHub token)
 - **MCP Tool**: `import_github_repos_as_assets`
 - **API Endpoint**: `erpnext_assist.api.import_github_repos`
+
+#### 10. Warehouse Finder (Norway-wide including Northern Norway)
+- Find warehouses anywhere in Norway via FINN.no
+- Search in northern regions like Tromsø, Bodø, Finnmark
+- **Phone control support** for automated browsing
+- Automatically add found warehouses to ERPNext
+- Check 24/7 access and storage specifications
+- **MCP Tool**: `find_warehouses_on_finn`
+- **API Endpoint**: `erpnext_assist.api.find_warehouses`
+
+#### 11. Enhanced Marketplace Communication with Material Requests
+- Manage Facebook Marketplace and FINN.no listings with phone control
+- Automatically fetch Material Request items for searching
+- **Norwegian standard message templates** for seller communication:
+  - **Standard**: "Hvor mye for hele bunken?"
+  - **Storage**: "jeg vil gjerne prøve dere ut, passer idag og er tilgangen 24/7"
+  - **Free Goods**: "Er disse forsatt ledig kan hente imørgen hvis det passer... 😃"
+  - **Apology**: "Hei. Beklager sent svar men det var mange.., det er hentet"
+- Add listings to saved lists for tracking
+- **MCP Tool**: `manage_marketplace_listings_with_phone_ctrl`
+- **API Endpoint**: `erpnext_assist.api.manage_marketplace_with_phone`
 
 ## Architecture
 

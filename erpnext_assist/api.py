@@ -417,3 +417,92 @@ def import_github_repos(
             "error": str(e),
             "message": "Failed to import GitHub repositories"
         }
+
+
+@frappe.whitelist()
+def find_warehouses(
+    location: str,
+    search_query: str = "lager",
+    region: str = None,
+    add_to_erpnext: bool = True,
+    phone_control: bool = False
+) -> Dict[str, Any]:
+    """
+    Find warehouses on FINN.no in Norway (including northern regions).
+    
+    Args:
+        location: Location to search (e.g., 'Tromsø', 'Bodø')
+        search_query: Search query (default: 'lager')
+        region: Optional region filter
+        add_to_erpnext: Add found warehouses to ERPNext
+        phone_control: Use phone control for automated browsing
+    
+    Returns:
+        Dictionary with found warehouses
+    """
+    try:
+        from erpnext_assist.mcp_server.server import find_warehouses_on_finn
+        
+        if isinstance(add_to_erpnext, str):
+            add_to_erpnext = add_to_erpnext.lower() == "true"
+        if isinstance(phone_control, str):
+            phone_control = phone_control.lower() == "true"
+        
+        result = find_warehouses_on_finn(
+            location=location,
+            search_query=search_query,
+            region=region,
+            add_to_erpnext=add_to_erpnext,
+            phone_control=phone_control
+        )
+        
+        return result
+    except Exception as e:
+        frappe.log_error(f"Warehouse finder error: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to find warehouses"
+        }
+
+
+@frappe.whitelist()
+def manage_marketplace_with_phone(
+    material_request_items: str = None,
+    marketplace: str = "facebook",
+    action: str = "search",
+    message_template: str = "standard"
+) -> Dict[str, Any]:
+    """
+    Manage marketplace listings with phone control and standard Norwegian messages.
+    
+    Args:
+        material_request_items: JSON string of Material Request item IDs
+        marketplace: Target marketplace ('facebook' or 'finn')
+        action: Action to perform
+        message_template: Message template to use
+    
+    Returns:
+        Dictionary with marketplace management results
+    """
+    try:
+        from erpnext_assist.mcp_server.server import manage_marketplace_listings_with_phone_ctrl
+        import json
+        
+        item_ids = json.loads(material_request_items) if material_request_items else None
+        
+        result = manage_marketplace_listings_with_phone_ctrl(
+            material_request_items=item_ids,
+            marketplace=marketplace,
+            action=action,
+            message_template=message_template
+        )
+        
+        return result
+    except Exception as e:
+        frappe.log_error(f"Marketplace management error: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to manage marketplace listings"
+        }
