@@ -389,6 +389,185 @@ result = {
 - **Audit regularly**: Review custom tools periodically
 - **Test thoroughly**: Test in a dev environment first
 
+---
+
+## Example 8: Receipt Scanner (Auto Stock/Asset Addition)
+
+**Tool Name**: `receipt_scanner`
+
+**Description**: Scan receipt images and automatically add items as stock or assets
+
+**Category**: Inventory
+
+**AI Provider**: Any
+
+**Prompt Template**:
+```
+Scan the receipt image and extract all items with quantities and prices.
+Add them to {{warehouse}} as {{add_as}}.
+OCR the receipt and create appropriate stock entries.
+```
+
+**Parameters**:
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| receipt_image | Attach Image | ✓ | Receipt image to scan |
+| add_as | Select | ✓ | stock/asset |
+| warehouse | Link | ✓ | Target warehouse (for stock) |
+| cost_center | Link |  | Cost center (for assets) |
+
+**Action Type**: Custom Code
+
+**Custom Code**:
+```python
+# This uses the built-in MCP tool
+from erpnext_assist.mcp_server.server import scan_receipt_and_add_items
+
+result = scan_receipt_and_add_items(
+    receipt_image=context['receipt_image'],
+    add_as=context['add_as'],
+    warehouse=context.get('warehouse'),
+    cost_center=context.get('cost_center')
+)
+
+# Note: Requires OCR library (pytesseract) setup
+```
+
+---
+
+## Example 9: Price Comparison (Prisjakt.no Integration)
+
+**Tool Name**: `vendor_price_comparison`
+
+**Description**: Compare vendor prices using Prisjakt.no and internal catalog
+
+**Category**: Purchasing
+
+**AI Provider**: Any
+
+**Prompt Template**:
+```
+Search for {{item_name}} across all vendors.
+Check Prisjakt.no for market prices and compare with internal suppliers.
+Suggest the cheapest option and pull complete vendor catalog if available.
+```
+
+**Parameters**:
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| item_name | Text | ✓ | Item to search for |
+| search_prisjakt | Checkbox | ✓ | Search Prisjakt.no |
+
+**Action Type**: Custom Code
+
+**Custom Code**:
+```python
+# Use the built-in MCP tool
+from erpnext_assist.mcp_server.server import compare_vendor_prices
+
+result = compare_vendor_prices(
+    item_name=context['item_name'],
+    search_prisjakt=context.get('search_prisjakt', True)
+)
+
+# Returns vendor comparisons and recommendations
+```
+
+---
+
+## Example 10: Natural Language Inventory Query (Voice Support)
+
+**Tool Name**: `voice_inventory_query`
+
+**Description**: Ask inventory questions in natural language - "do we have pliers?"
+
+**Category**: Inventory
+
+**AI Provider**: Any (works great with voice-to-text)
+
+**Prompt Template**:
+```
+Answer the question: {{query}}
+Search inventory and respond in natural language about availability and location.
+```
+
+**Parameters**:
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| query | Long Text | ✓ | Natural language question |
+
+**Action Type**: Custom Code
+
+**Custom Code**:
+```python
+# Use the built-in MCP tool
+from erpnext_assist.mcp_server.server import query_inventory_natural_language
+
+result = query_inventory_natural_language(
+    query=context['query']
+)
+
+# Returns natural language response with item details
+```
+
+**Example Queries**:
+- "Do we have pliers?"
+- "Where is the hammer?"
+- "How many screws do we have?"
+- "Show me all tools in the main warehouse"
+
+---
+
+## Example 11: Pickup Route Orchestration
+
+**Tool Name**: `optimize_pickup_route`
+
+**Description**: Schedule and optimize pickup routes for marketplace items
+
+**Category**: Marketplace
+
+**AI Provider**: Any
+
+**Prompt Template**:
+```
+Orchestrate pickup for these listings: {{listings}}
+Contact sellers to schedule pickups on {{preferred_date}}.
+Optimize the route starting from {{start_location}}.
+```
+
+**Parameters**:
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| listings | Long Text | ✓ | JSON array of listing IDs |
+| start_location | Text |  | Starting address/location |
+| preferred_date | Date | ✓ | Preferred pickup date |
+
+**Action Type**: Custom Code
+
+**Custom Code**:
+```python
+import json
+from erpnext_assist.mcp_server.server import orchestrate_pickup_route
+
+listing_ids = json.loads(context.get('listings', '[]'))
+
+result = orchestrate_pickup_route(
+    listings=listing_ids,
+    start_location=context.get('start_location'),
+    preferred_date=context.get('preferred_date')
+)
+
+# Returns optimized route plan with seller contact status
+```
+
+**Use Case**:
+When you've posted multiple items on Facebook Marketplace or FINN.no and buyers want to pick them up, this tool:
+1. Contacts all sellers to schedule pickup times
+2. Optimizes the route to minimize travel
+3. Creates an efficient pickup schedule for a single day
+
+---
+
 ## Need More Examples?
 
 Check the community forum or create an issue on GitHub with your use case!

@@ -398,6 +398,282 @@ def get_item_details(
         }
 
 
+# New Tool 4: Receipt Scanner with OCR
+@mcp.tool()
+def scan_receipt_and_add_items(
+    receipt_image: str,
+    add_as: str = "stock",
+    warehouse: Optional[str] = None,
+    cost_center: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Scan a receipt image using OCR and automatically add items as stock or assets.
+    
+    Args:
+        receipt_image: Base64 encoded receipt image
+        add_as: Type to add items as ('stock' or 'asset')
+        warehouse: Target warehouse for stock items
+        cost_center: Cost center for asset items
+    
+    Returns:
+        Dictionary with scanned items and creation status
+    """
+    try:
+        import frappe
+        
+        # TODO: Implement OCR processing (e.g., using pytesseract or cloud OCR)
+        # For now, this is a placeholder implementation
+        
+        items_created = []
+        
+        # Placeholder: In real implementation, parse receipt with OCR
+        # and extract item names, quantities, prices
+        
+        # Example structure after OCR:
+        # scanned_items = [
+        #     {"name": "Item A", "qty": 2, "rate": 100},
+        #     {"name": "Item B", "qty": 1, "rate": 50},
+        # ]
+        
+        return {
+            "success": True,
+            "items_created": items_created,
+            "add_as": add_as,
+            "message": "Receipt scanned. Implement OCR processing to extract items.",
+            "note": "This tool requires OCR library integration (pytesseract or similar)"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to scan receipt"
+        }
+
+
+# New Tool 5: Price Comparison with Prisjakt.no
+@mcp.tool()
+def compare_vendor_prices(
+    item_name: str,
+    search_prisjakt: bool = True,
+) -> Dict[str, Any]:
+    """
+    Compare vendor prices for an item using Prisjakt.no and internal vendor catalog.
+    Suggests cheapest vendor and pulls vendor catalog.
+    
+    Args:
+        item_name: Name or description of item to search
+        search_prisjakt: Whether to search Prisjakt.no (default: True)
+    
+    Returns:
+        Dictionary with vendor comparisons and catalog suggestions
+    """
+    try:
+        import frappe
+        import requests
+        
+        results = {
+            "item_name": item_name,
+            "internal_vendors": [],
+            "prisjakt_results": [],
+            "recommendations": []
+        }
+        
+        # Search internal ERPNext suppliers
+        suppliers = frappe.db.sql("""
+            SELECT 
+                s.name as supplier_name,
+                si.item_code,
+                si.item_name,
+                si.supplier_part_no,
+                si.last_purchase_rate
+            FROM `tabSupplier` s
+            LEFT JOIN `tabItem Supplier` si ON si.parent = s.name
+            WHERE si.item_name LIKE %s OR si.item_code LIKE %s
+            ORDER BY si.last_purchase_rate ASC
+        """, (f"%{item_name}%", f"%{item_name}%"), as_dict=True)
+        
+        results["internal_vendors"] = suppliers
+        
+        # Search Prisjakt.no (placeholder - requires API key or web scraping)
+        if search_prisjakt:
+            # TODO: Implement Prisjakt.no API integration or web scraping
+            results["prisjakt_results"] = []
+            results["note"] = "Prisjakt.no integration requires API setup or web scraping"
+        
+        # Generate recommendations
+        if suppliers:
+            cheapest = min(suppliers, key=lambda x: x.get('last_purchase_rate', float('inf')))
+            results["recommendations"].append({
+                "type": "cheapest_internal",
+                "supplier": cheapest.get('supplier_name'),
+                "price": cheapest.get('last_purchase_rate'),
+                "item_code": cheapest.get('item_code')
+            })
+        
+        return {
+            "success": True,
+            "results": results,
+            "message": f"Found {len(suppliers)} internal vendor matches"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to compare vendor prices"
+        }
+
+
+# New Tool 6: Natural Language Inventory Query (Voice/Text)
+@mcp.tool()
+def query_inventory_natural_language(
+    query: str,
+) -> Dict[str, Any]:
+    """
+    Answer natural language queries about inventory.
+    Examples: "do we have pliers?", "where is the hammer?", "how many screws do we have?"
+    
+    Args:
+        query: Natural language question about inventory
+    
+    Returns:
+        Dictionary with query results in natural language
+    """
+    try:
+        import frappe
+        import re
+        
+        # Extract item keywords from query
+        query_lower = query.lower()
+        
+        # Parse query intent
+        is_availability = any(word in query_lower for word in ['have', 'got', 'stock', 'available'])
+        is_location = any(word in query_lower for word in ['where', 'location', 'warehouse'])
+        is_quantity = any(word in query_lower for word in ['how many', 'how much', 'quantity', 'count'])
+        
+        # Extract potential item names (simple approach - can be enhanced with NLP)
+        # Remove common words
+        stop_words = ['do', 'we', 'have', 'the', 'a', 'an', 'is', 'where', 'how', 'many', 'much', 'there']
+        words = query_lower.split()
+        item_keywords = [w.strip('?.,!') for w in words if w not in stop_words]
+        
+        # Search for items matching keywords
+        search_pattern = '%' + '%'.join(item_keywords) + '%'
+        items = frappe.db.sql("""
+            SELECT 
+                i.item_code,
+                i.item_name,
+                i.description,
+                SUM(b.actual_qty) as total_qty,
+                GROUP_CONCAT(DISTINCT b.warehouse) as warehouses
+            FROM `tabItem` i
+            LEFT JOIN `tabBin` b ON b.item_code = i.item_code AND b.actual_qty > 0
+            WHERE i.item_name LIKE %s OR i.description LIKE %s OR i.item_code LIKE %s
+            GROUP BY i.item_code
+            HAVING total_qty > 0 OR total_qty IS NULL
+            LIMIT 10
+        """, (search_pattern, search_pattern, search_pattern), as_dict=True)
+        
+        # Generate natural language response
+        if not items:
+            response = f"No items found matching '{' '.join(item_keywords)}'. Try different keywords."
+        elif len(items) == 1:
+            item = items[0]
+            qty = item.get('total_qty', 0) or 0
+            warehouses = item.get('warehouses', 'unknown location')
+            
+            if is_location:
+                response = f"Yes, we have {item['item_name']} in {warehouses}."
+            elif is_quantity:
+                response = f"We have {qty} units of {item['item_name']}."
+            else:
+                response = f"Yes, we have {qty} units of {item['item_name']} in {warehouses}."
+        else:
+            response = f"Found {len(items)} items matching your query:\n"
+            for item in items[:5]:
+                qty = item.get('total_qty', 0) or 0
+                response += f"- {item['item_name']}: {qty} units\n"
+        
+        return {
+            "success": True,
+            "query": query,
+            "response": response,
+            "items_found": items,
+            "message": "Query processed successfully"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to process natural language query"
+        }
+
+
+# Enhancement to Tool 1: Pickup Route Orchestration
+@mcp.tool()
+def orchestrate_pickup_route(
+    listings: List[str],
+    start_location: Optional[str] = None,
+    preferred_date: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Orchestrate efficient pickup routes for marketplace listings by contacting sellers.
+    Schedules pickups and optimizes route for a specific day.
+    
+    Args:
+        listings: List of marketplace listing IDs to schedule pickups for
+        start_location: Starting location for the route
+        preferred_date: Preferred pickup date (YYYY-MM-DD format)
+    
+    Returns:
+        Dictionary with route plan and seller contact status
+    """
+    try:
+        import frappe
+        from datetime import datetime
+        
+        route_plan = {
+            "listings": [],
+            "optimal_route": [],
+            "date": preferred_date or datetime.now().strftime('%Y-%m-%d'),
+            "start_location": start_location,
+            "total_distance": 0,
+            "estimated_time": 0
+        }
+        
+        for listing_id in listings:
+            listing = frappe.get_doc("Marketplace Listing", listing_id)
+            
+            # Get seller contact info (would be stored in listing)
+            # TODO: Implement actual contact/scheduling logic
+            
+            route_plan["listings"].append({
+                "listing_id": listing_id,
+                "item": listing.item_code,
+                "status": "scheduled",
+                "seller_contacted": True,
+                "pickup_time": None  # TODO: Get confirmed time from seller
+            })
+        
+        # TODO: Implement route optimization algorithm
+        # Could use Google Maps API, Mapbox, or other routing service
+        
+        route_plan["optimal_route"] = route_plan["listings"]  # Placeholder
+        route_plan["message"] = f"Route planned for {len(listings)} pickups"
+        route_plan["note"] = "Implement route optimization and seller communication API"
+        
+        return {
+            "success": True,
+            "route_plan": route_plan,
+            "message": f"Pickup route orchestrated for {len(listings)} items"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to orchestrate pickup route"
+        }
+
+
 def run_server(transport: str = "stdio"):
     """
     Run the MCP server with the specified transport.

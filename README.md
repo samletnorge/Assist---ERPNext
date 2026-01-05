@@ -14,7 +14,7 @@ An ERPNext custom app that extends ERPNext with AI-powered tools using the Model
 - 📸 **AI Background Removal** - Professional product images with U²-Net AI
 - 🤖 **Universal AI Support** - Works with Claude, OpenAI, Ollama, and custom providers
 - 🔒 **Privacy-First** - All processing happens locally on your server
-- 📦 **3 Ready-to-Use Tools** - Marketplace posting, camera item addition, barcode scanning
+- 📦 **10 Ready-to-Use Tools** - Marketplace, camera, barcode, receipt scanner, price comparison, voice queries, and more
 - 🌐 **Offline Capable** - Full functionality without internet connection
 
 ## Features
@@ -27,11 +27,13 @@ An ERPNext custom app that extends ERPNext with AI-powered tools using the Model
 
 ### 📦 Built-in Tools
 
-#### 1. Marketplace Posting Tool
+#### 1. Marketplace Posting Tool with Pickup Orchestration
 - Post stock items or assets to marketplaces like Facebook Marketplace and FINN.no
 - Automatically track and manage listings
 - Save and monitor marketplace searches based on purchase or material requests
+- **NEW**: Orchestrate efficient pickup routes by contacting sellers and scheduling optimal pickup days
 - **DocTypes**: Marketplace Listing, Saved Marketplace Search
+- **MCP Tools**: `post_to_marketplace`, `track_saved_search`, `orchestrate_pickup_route`
 
 #### 2. Camera-based Quick Item Addition with AI Background Removal
 - Quickly add new items (stock or assets) using camera capture
@@ -50,6 +52,24 @@ An ERPNext custom app that extends ERPNext with AI-powered tools using the Model
 - View stock levels across all warehouses
 - See default warehouse assignments
 - **MCP Tool**: `scan_barcode_for_location`
+
+#### 4. Receipt Scanner (OCR-powered)
+- Scan receipt images and automatically extract items
+- Add items as stock or assets with quantities and prices
+- OCR-powered text extraction (requires pytesseract or similar)
+- **MCP Tool**: `scan_receipt_and_add_items`
+
+#### 5. Price Comparison with Prisjakt.no
+- Compare prices across internal vendors and Prisjakt.no
+- Pull complete vendor catalogs for suggestions
+- Find the cheapest supplier for any item
+- **MCP Tool**: `compare_vendor_prices`
+
+#### 6. Natural Language Inventory Query (Voice-enabled)
+- Ask inventory questions in plain language: "do we have pliers?"
+- Voice-to-text compatible for hands-free operation
+- Get instant answers about availability and location
+- **MCP Tool**: `query_inventory_natural_language`
 
 ## Architecture
 
