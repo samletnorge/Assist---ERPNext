@@ -1,0 +1,5 @@
+frappe
+mcp[cli]>=1.0.0
+requests
+rembg>=2.0.0
+pillow>=10.0.0
