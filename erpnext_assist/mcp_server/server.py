@@ -262,8 +262,6 @@ def quick_add_item_from_camera(
             "image_enhanced": enhance_image,
             "message": "Item created successfully from camera with processed image"
         }
-            "message": "Item created successfully from camera"
-        }
     except Exception as e:
         return {
             "success": False,
