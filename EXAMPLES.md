@@ -944,6 +944,204 @@ for instruction in result['results']['phone_control_instructions']:
 
 ---
 
+## Example 17: Import Norwegian Chart of Accounts (NS 4102 or DFØ)
+
+**Description**: Import standard Norwegian accounting chart of accounts following NS 4102 (private sector) or DFØ (government sector) standards into ERPNext.
+
+**Tool Name**: Import Norwegian Accounts
+
+**Parameters**:
+| Parameter | Type | Required | Options/Description |
+|-----------|------|----------|---------------------|
+| standard | Select | ✓ | NS4102, DFO |
+| company | Data | ✗ | Company name (uses default if not provided) |
+
+**Action Type**: API Call
+
+**API Endpoint**: `erpnext_assist.api.import_norwegian_accounts`
+
+**MCP Tool Usage**:
+```python
+# Import NS 4102 for private company
+result = import_norwegian_chart_of_accounts(
+    standard="NS4102",
+    company="My Company AS"
+)
+
+# Import DFØ for government organization
+result = import_norwegian_chart_of_accounts(
+    standard="DFO",
+    company="Lyngdal Kommune"
+)
+
+print(f"Imported {result['imported_count']} accounts")
+print(f"Standard: {result['standard']}")
+```
+
+**Standards Compliance**:
+- **NS 4102**: Norwegian Accounting Standard for private sector
+  - Assets (1000-1999)
+  - Equity and Liabilities (2000-2999)
+  - Operating Income (3000-3999)
+  - Operating Costs (4000-7999)
+  - Financial Items (8000-8999)
+
+- **DFØ Standard Kontoplan**: Government sector accounting
+  - Fixed Assets (1-1999)
+  - Current Assets (2000-2999)
+  - Equity (4000-4999)
+  - Liabilities (5000-7999)
+  - Income and Expenses (8000-9999)
+
+**Benefits**:
+- **Standards Compliant**: Official Norwegian accounting standards
+- **Hierarchical Structure**: Proper parent-child account relationships
+- **Sector-Specific**: Choose between private (NS 4102) or government (DFØ)
+- **Quick Setup**: Import hundreds of accounts in seconds
+- **Multi-Company**: Import for different companies separately
+
+---
+
+## Example 18: Skatteetaten (Tax Authority) Integration
+
+**Description**: Interact with Norwegian Tax Authority (Skatteetaten) for employee registrations, tax reports, deductions, and deadline tracking.
+
+**Tool Name**: Skatteetaten Tax Submissions
+
+**Parameters**:
+| Parameter | Type | Required | Options/Description |
+|-----------|------|----------|---------------------|
+| action | Select | ✓ | employee_registration, tax_report, deduction_request, check_deadlines, check_account |
+| data | Long Text (JSON) | ✗ | Additional data for the submission |
+
+**Action Type**: API Call
+
+**API Endpoint**: `erpnext_assist.api.interact_with_skatteetaten`
+
+**MCP Tool Usage**:
+```python
+# Submit A-melding for new employee
+result = manage_skatteetaten_submissions(
+    action="employee_registration",
+    data={
+        "employee_name": "John Doe",
+        "employee_id": "EMP-001",
+        "start_date": "2024-01-01",
+        "salary": 500000,
+        "position": "Software Developer"
+    }
+)
+
+# Check upcoming tax deadlines
+result = manage_skatteetaten_submissions(
+    action="check_deadlines",
+    data={}
+)
+
+# File tax deduction request
+result = manage_skatteetaten_submissions(
+    action="deduction_request",
+    data={
+        "deduction_type": "home_office",
+        "amount": 15000,
+        "description": "Home office expenses",
+        "documentation": "receipts_attached"
+    }
+)
+
+# Get phone control instructions
+print("Instructions:")
+for step in result['instructions']:
+    print(f"  {step}")
+```
+
+**Supported Actions**:
+1. **employee_registration** - Submit A-melding for new hires
+2. **tax_report** - File skattemelding (tax returns)
+3. **deduction_request** - Request fradrag (tax deductions)
+4. **check_deadlines** - View upcoming report deadlines
+5. **check_account** - Check tax account balance and status
+
+**Benefits**:
+- **Hiring Workflow**: Automate A-melding submission when hiring
+- **Tax Compliance**: Track and submit required reports
+- **Deadline Management**: Never miss a tax filing deadline
+- **Phone Control**: Step-by-step instructions for web portal navigation
+- **Audit Trail**: All interactions logged in ERPNext
+
+---
+
+## Example 19: Lyngdal Kommune (Municipal Services) Building Permits
+
+**Description**: Submit building permit applications and property upgrade notifications to Norwegian municipal services (works with any kommune).
+
+**Tool Name**: Kommune Building Application
+
+**Parameters**:
+| Parameter | Type | Required | Options/Description |
+|-----------|------|----------|---------------------|
+| kommune | Data | ✓ | Municipality name (e.g., "Lyngdal", "Oslo") |
+| application_type | Select | ✓ | building_permit, renovation_permit, property_upgrade |
+| data | Long Text (JSON) | ✗ | Application details |
+
+**Action Type**: API Call
+
+**API Endpoint**: `erpnext_assist.api.submit_kommune_application`
+
+**MCP Tool Usage**:
+```python
+# Submit building permit for house painting
+result = submit_lyngdal_kommune_application(
+    kommune="Lyngdal",
+    application_type="renovation_permit",
+    data={
+        "property_address": "Storgata 15, 4580 Lyngdal",
+        "property_id": "12345/67",
+        "work_description": "External painting of house",
+        "estimated_cost": 50000,
+        "estimated_value_increase": 75000,
+        "start_date": "2024-06-01",
+        "completion_date": "2024-07-31",
+        "contractor": "Malermester AS"
+    }
+)
+
+# Submit property upgrade notification
+result = submit_lyngdal_kommune_application(
+    kommune="Lyngdal",
+    application_type="property_upgrade",
+    data={
+        "property_address": "Storgata 15, 4580 Lyngdal",
+        "upgrade_type": "Facade painting",
+        "estimated_value_increase": 75000
+    }
+)
+
+print(f"Status: {result['status']}")
+print(f"Processing time: {result['expected_processing_time']}")
+print(f"Property value impact: {result['property_value_impact']}")
+```
+
+**Application Types**:
+1. **building_permit** - Byggesøknad for major construction
+2. **renovation_permit** - Permits for painting, renovations
+3. **property_upgrade** - Notify about value-increasing improvements
+
+**Use Cases**:
+- **House Painting**: Submit renovation permits for exterior work
+- **Property Upgrades**: Track improvements that increase value
+- **Building Projects**: Apply for construction permits
+- **Value Tracking**: Monitor property value increases from improvements
+
+**Benefits**:
+- **Any Kommune**: Works with all Norwegian municipalities
+- **Phone Control**: Instructions for municipal web portals
+- **Value Tracking**: Links improvements to property value
+- **Audit Trail**: Complete application history in ERPNext
+- **Processing Time**: Estimated timeline for approvals
+
+---
+
 ## Need More Examples?
 
 Check the community forum or create an issue on GitHub with your use case!

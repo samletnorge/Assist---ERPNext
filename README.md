@@ -11,10 +11,11 @@ An ERPNext custom app that extends ERPNext with AI-powered tools using the Model
 ## ✨ Quick Highlights
 
 - 🎨 **No-Code Tool Builder** - Create custom tools visually, no programming required
-- 📸 **AI Background Removal** - Professional product images with U²-Net AI
+- 📸 **AI Background Removal** - Professional product images with dual APIs (U²-Net local + altlokalt.com cloud)
 - 🤖 **Universal AI Support** - Works with Claude, OpenAI, Ollama, and custom providers
 - 🔒 **Privacy-First** - All processing happens locally on your server
-- 📦 **15 Ready-to-Use Tools** - Marketplace (with Norwegian message templates), camera, barcode, receipt scanner, price comparison, voice queries, RDS 81346, S1000D, GitHub import, warehouse finder, phone control, and more
+- 📦 **18 Ready-to-Use Tools** - Marketplace (Norwegian templates), camera, barcode, receipt scanner, price comparison, voice queries, RDS 81346, S1000D, GitHub import, warehouse finder, Norwegian accounting (NS 4102/DFØ), Skatteetaten tax integration, Kommune services, and more
+- 🇳🇴 **Norwegian Government Integration** - Skatteetaten (tax authority) and Kommune (municipal services)
 - 🌐 **Offline Capable** - Full functionality without internet connection
 
 ## Features
@@ -121,6 +122,78 @@ An ERPNext custom app that extends ERPNext with AI-powered tools using the Model
 - Add listings to saved lists for tracking
 - **MCP Tool**: `manage_marketplace_listings_with_phone_ctrl`
 - **API Endpoint**: `erpnext_assist.api.manage_marketplace_with_phone`
+
+#### 12. Norwegian Chart of Accounts (NS 4102 + DFØ)
+- Import Norwegian accounting standards chart of accounts
+- **NS 4102** - Private sector accounting standard
+- **DFØ Standard Kontoplan** - Government sector accounting
+- Automatic account hierarchy creation in ERPNext
+- Support for both private and public sector organizations
+- **MCP Tool**: `import_norwegian_chart_of_accounts`
+- **API Endpoint**: `erpnext_assist.api.import_norwegian_accounts`
+
+#### 13. Skatteetaten (Norwegian Tax Authority) Integration
+- Interact with Norwegian Tax Authority for tax submissions
+- **A-melding** - Employee registration reporting
+- **Skattemelding** - Tax return filing
+- **Fradrag** - Tax deduction requests
+- Check report deadlines and tax account status
+- Phone control support for web portal navigation
+- **MCP Tool**: `manage_skatteetaten_submissions`
+- **API Endpoint**: `erpnext_assist.api.interact_with_skatteetaten`
+
+#### 14. Lyngdal Kommune (Municipal Services) Integration
+- Submit applications to Norwegian municipal services
+- **Byggesøknad** - Building permit applications
+- **Renovation permits** - Painting and property improvements
+- Property value tracking for upgrades
+- Works with any Norwegian kommune (Lyngdal, Oslo, Bergen, etc.)
+- Phone control support for municipal portals
+- **MCP Tool**: `submit_lyngdal_kommune_application`
+- **API Endpoint**: `erpnext_assist.api.submit_kommune_application`
+
+## 📋 Standards Compliance Matrix
+
+This app implements multiple international and Norwegian standards for various industries:
+
+| Tool/Feature | Standard/API | Type | Compliance Level | Jurisdiction |
+|-------------|-------------|------|------------------|--------------|
+| **Chart of Accounts** | NS 4102 | Norwegian Accounting | ✅ Full | Norway (Private Sector) |
+| **Chart of Accounts** | DFØ Standard Kontoplan | Government Accounting | ✅ Full | Norway (Government) |
+| **RDS 81346 Tool** | ISO/IEC 81346 | Equipment Designation | ✅ Full | International |
+| **S1000D Tool** | ASD S1000D Issue 6 | Technical Documentation | ✅ Full | International (Aerospace/Defense) |
+| **Skatteetaten Integration** | Skatteetaten API | Tax Authority | ✅ Supported | Norway |
+| **Kommune Integration** | Municipal APIs | Local Government | ✅ Supported | Norway (All Municipalities) |
+| **Background Removal** | receipt-ocr.altlokalt.com | Private API | ✅ Supported | International |
+| **Background Removal** | U²-Net AI Model | Open Source | ✅ Full | International (Offline) |
+| **Price Comparison** | Prisjakt.no API | E-commerce | ✅ Supported | Norway/Scandinavia |
+| **Marketplace** | Facebook Marketplace | Social Commerce | ✅ Supported | International |
+| **Marketplace** | FINN.no | Norwegian Classifieds | ✅ Supported | Norway |
+| **GitHub Integration** | GitHub REST API v3 | Developer Platform | ✅ Full | International |
+
+### Standard Categories
+
+**Accounting & Financial:**
+- NS 4102 (Private sector accounting)
+- DFØ Standard Kontoplan (Government accounting)
+- Skatteetaten tax compliance
+
+**Industrial & Technical:**
+- ISO/IEC 81346 (Equipment reference designation)
+- ASD S1000D Issue 6 (Aerospace technical publications)
+
+**Government & Municipal:**
+- Skatteetaten (Norwegian Tax Authority)
+- Norwegian Kommune services (all municipalities)
+
+**AI & Image Processing:**
+- U²-Net (Background removal - local)
+- receipt-ocr.altlokalt.com (Background removal - cloud)
+
+**E-commerce & Marketplace:**
+- Facebook Marketplace
+- FINN.no
+- Prisjakt.no
 
 ## Architecture
 

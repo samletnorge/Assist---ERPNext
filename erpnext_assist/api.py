@@ -506,3 +506,101 @@ def manage_marketplace_with_phone(
             "error": str(e),
             "message": "Failed to manage marketplace listings"
         }
+
+
+@frappe.whitelist()
+def import_norwegian_accounts(standard: str = "NS4102", company: str = None) -> Dict[str, Any]:
+    """
+    Import Norwegian chart of accounts (NS 4102 or DFØ standard).
+    
+    Args:
+        standard: "NS4102" for private sector or "DFO" for government sector
+        company: Company name to import accounts for
+    
+    Returns:
+        Dictionary with import results
+    """
+    try:
+        from erpnext_assist.mcp_server.server import import_norwegian_chart_of_accounts
+        
+        result = import_norwegian_chart_of_accounts(
+            standard=standard,
+            company=company
+        )
+        
+        return result
+    except Exception as e:
+        frappe.log_error(f"Norwegian accounts import error: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": f"Failed to import Norwegian chart of accounts ({standard})"
+        }
+
+
+@frappe.whitelist()
+def interact_with_skatteetaten(action: str, data: str = None) -> Dict[str, Any]:
+    """
+    Interact with Skatteetaten (Norwegian Tax Authority) API or via phone control.
+    
+    Args:
+        action: Type of interaction (employee_registration, tax_report, deduction_request, check_deadlines, check_account)
+        data: JSON string with additional data for the action
+    
+    Returns:
+        Dictionary with interaction results
+    """
+    try:
+        from erpnext_assist.mcp_server.server import manage_skatteetaten_submissions
+        import json
+        
+        data_dict = json.loads(data) if data else {}
+        
+        result = manage_skatteetaten_submissions(
+            action=action,
+            data=data_dict
+        )
+        
+        return result
+    except Exception as e:
+        frappe.log_error(f"Skatteetaten interaction error: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to interact with Skatteetaten"
+        }
+
+
+@frappe.whitelist()
+def submit_kommune_application(kommune: str, application_type: str, data: str = None) -> Dict[str, Any]:
+    """
+    Submit applications to Norwegian municipal services (kommune).
+    
+    Args:
+        kommune: Municipality name (e.g., "Lyngdal")
+        application_type: Type of application (building_permit, renovation_permit, property_upgrade)
+        data: JSON string with application data
+    
+    Returns:
+        Dictionary with submission results
+    """
+    try:
+        from erpnext_assist.mcp_server.server import submit_lyngdal_kommune_application
+        import json
+        
+        data_dict = json.loads(data) if data else {}
+        
+        result = submit_lyngdal_kommune_application(
+            kommune=kommune,
+            application_type=application_type,
+            data=data_dict
+        )
+        
+        return result
+    except Exception as e:
+        frappe.log_error(f"Kommune application error: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": f"Failed to submit application to {kommune} Kommune"
+        }

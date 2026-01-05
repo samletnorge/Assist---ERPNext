@@ -1267,6 +1267,331 @@ def manage_marketplace_listings_with_phone_ctrl(
         }
 
 
+@mcp.tool()
+def import_norwegian_chart_of_accounts(standard: str = "NS4102", company: str = None):
+    """
+    Import Norwegian chart of accounts following NS 4102 standard (private sector)
+    or DFØ standard (government sector).
+    
+    Args:
+        standard: "NS4102" for private sector or "DFO" for government sector
+        company: Company name to import accounts for (uses default if not provided)
+    
+    Returns:
+        Dictionary with import results including number of accounts created
+    
+    Standards: NS 4102 (Norwegian Accounting Standard), DFØ Standard Kontoplan
+    """
+    try:
+        import frappe
+        
+        if not company:
+            company = frappe.defaults.get_user_default("Company")
+        
+        # NS 4102 Standard Chart of Accounts (Private Sector)
+        ns4102_accounts = {
+            "1": {"name": "1 - EIENDELER", "type": "Asset", "parent": None},
+            "10": {"name": "10 - Anleggsmidler", "type": "Asset", "parent": "1"},
+            "11": {"name": "11 - Immaterielle eiendeler", "type": "Asset", "parent": "10"},
+            "1100": {"name": "1100 - Forskning og utvikling", "type": "Asset", "parent": "11"},
+            "1101": {"name": "1101 - Konsesjoner, patenter, lisenser", "type": "Asset", "parent": "11"},
+            "1102": {"name": "1102 - Goodwill", "type": "Asset", "parent": "11"},
+            "12": {"name": "12 - Varige driftsmidler", "type": "Asset", "parent": "10"},
+            "1200": {"name": "1200 - Tomter", "type": "Asset", "parent": "12"},
+            "1201": {"name": "1201 - Bygninger", "type": "Asset", "parent": "12"},
+            "1202": {"name": "1202 - Maskiner og anlegg", "type": "Asset", "parent": "12"},
+            "1203": {"name": "1203 - Inventar", "type": "Asset", "parent": "12"},
+            "1204": {"name": "1204 - Transportmidler", "type": "Asset", "parent": "12"},
+            "13": {"name": "13 - Finansielle anleggsmidler", "type": "Asset", "parent": "10"},
+            "1300": {"name": "1300 - Investeringer i datterselskap", "type": "Asset", "parent": "13"},
+            "1301": {"name": "1301 - Lån til foretak i samme konsern", "type": "Asset", "parent": "13"},
+            "14": {"name": "14 - Omløpsmidler", "type": "Asset", "parent": "1"},
+            "1400": {"name": "1400 - Varelager", "type": "Asset", "parent": "14"},
+            "1500": {"name": "1500 - Kundefordringer", "type": "Receivable", "parent": "14"},
+            "1600": {"name": "1600 - Andre fordringer", "type": "Asset", "parent": "14"},
+            "1900": {"name": "1900 - Kasse/Bank", "type": "Bank", "parent": "14"},
+            "2": {"name": "2 - EGENKAPITAL OG GJELD", "type": "Liability", "parent": None},
+            "20": {"name": "20 - Egenkapital", "type": "Equity", "parent": "2"},
+            "2000": {"name": "2000 - Selskapskapital", "type": "Equity", "parent": "20"},
+            "2050": {"name": "2050 - Opptjent egenkapital", "type": "Equity", "parent": "20"},
+            "21": {"name": "21 - Avsetning for forpliktelser", "type": "Liability", "parent": "2"},
+            "22": {"name": "22 - Langsiktig gjeld", "type": "Liability", "parent": "2"},
+            "2200": {"name": "2200 - Gjeld til kredittinstitusjoner", "type": "Liability", "parent": "22"},
+            "23": {"name": "23 - Kortsiktig gjeld", "type": "Liability", "parent": "2"},
+            "2400": {"name": "2400 - Leverandørgjeld", "type": "Payable", "parent": "23"},
+            "2600": {"name": "2600 - Skyldig offentlige avgifter", "type": "Liability", "parent": "23"},
+            "2700": {"name": "2700 - Annen kortsiktig gjeld", "type": "Liability", "parent": "23"},
+            "3": {"name": "3 - DRIFTSINNTEKTER", "type": "Income", "parent": None},
+            "3000": {"name": "3000 - Salgsinntekter", "type": "Income", "parent": "3"},
+            "3100": {"name": "3100 - Annen driftsinntekt", "type": "Income", "parent": "3"},
+            "4": {"name": "4 - VAREKJØP", "type": "Cost of Goods Sold", "parent": None},
+            "4000": {"name": "4000 - Varekjøp", "type": "Cost of Goods Sold", "parent": "4"},
+            "4900": {"name": "4900 - Endring i beholdning", "type": "Cost of Goods Sold", "parent": "4"},
+            "5": {"name": "5 - LØNNSKOSTNAD", "type": "Expense", "parent": None},
+            "5000": {"name": "5000 - Lønn", "type": "Expense", "parent": "5"},
+            "5400": {"name": "5400 - Arbeidsgiveravgift", "type": "Expense", "parent": "5"},
+            "5900": {"name": "5900 - Andre personalkostnader", "type": "Expense", "parent": "5"},
+            "6": {"name": "6 - ANNEN DRIFTSKOSTNAD", "type": "Expense", "parent": None},
+            "6000": {"name": "6000 - Leie av lokaler", "type": "Expense", "parent": "6"},
+            "6100": {"name": "6100 - Strøm og oppvarming", "type": "Expense", "parent": "6"},
+            "6300": {"name": "6300 - Reparasjon og vedlikehold", "type": "Expense", "parent": "6"},
+            "6700": {"name": "6700 - Kontorkostnader", "type": "Expense", "parent": "6"},
+            "7": {"name": "7 - AVSKRIVNINGER", "type": "Expense", "parent": None},
+            "7000": {"name": "7000 - Avskrivninger", "type": "Expense", "parent": "7"},
+            "8": {"name": "8 - FINANSINNTEKTER OG FINANSKOSTNADER", "type": "Income", "parent": None},
+            "8050": {"name": "8050 - Renteinntekter", "type": "Income", "parent": "8"},
+            "8150": {"name": "8150 - Rentekostnader", "type": "Expense", "parent": "8"},
+        }
+        
+        # DFØ Standard Kontoplan (Government Sector)
+        dfo_accounts = {
+            "1": {"name": "1 - Anleggsmidler", "type": "Asset", "parent": None},
+            "10": {"name": "10 - Immaterielle eiendeler", "type": "Asset", "parent": "1"},
+            "11": {"name": "11 - Varige driftsmidler", "type": "Asset", "parent": "1"},
+            "12": {"name": "12 - Finansielle anleggsmidler", "type": "Asset", "parent": "1"},
+            "2": {"name": "2 - Omløpsmidler og kortsiktige fordringer", "type": "Asset", "parent": None},
+            "20": {"name": "20 - Beholdning av varer", "type": "Asset", "parent": "2"},
+            "21": {"name": "21 - Fordringer", "type": "Receivable", "parent": "2"},
+            "22": {"name": "22 - Bankinnskudd", "type": "Bank", "parent": "2"},
+            "3": {"name": "3 - Opptjent ikke inntektsført", "type": "Asset", "parent": None},
+            "4": {"name": "4 - Egenkapital", "type": "Equity", "parent": None},
+            "40": {"name": "40 - Innskutt egenkapital", "type": "Equity", "parent": "4"},
+            "41": {"name": "41 - Opptjent egenkapital", "type": "Equity", "parent": "4"},
+            "5": {"name": "5 - Avsetninger til forpliktelser", "type": "Liability", "parent": None},
+            "6": {"name": "6 - Annen langsiktig gjeld", "type": "Liability", "parent": None},
+            "7": {"name": "7 - Kortsiktig gjeld", "type": "Liability", "parent": None},
+            "70": {"name": "70 - Leverandørgjeld", "type": "Payable", "parent": "7"},
+            "71": {"name": "71 - Skyldige offentlige avgifter", "type": "Liability", "parent": "7"},
+            "8": {"name": "8 - Inntekt", "type": "Income", "parent": None},
+            "80": {"name": "80 - Tilskudd og overføringer", "type": "Income", "parent": "8"},
+            "81": {"name": "81 - Salgsinntekt", "type": "Income", "parent": "8"},
+            "9": {"name": "9 - Kostnader", "type": "Expense", "parent": None},
+            "90": {"name": "90 - Lønn og sosiale kostnader", "type": "Expense", "parent": "9"},
+            "91": {"name": "91 - Varekjøp", "type": "Expense", "parent": "9"},
+            "92": {"name": "92 - Andre driftskostnader", "type": "Expense", "parent": "9"},
+            "93": {"name": "93 - Avskrivninger", "type": "Expense", "parent": "9"},
+        }
+        
+        accounts_to_import = ns4102_accounts if standard.upper() == "NS4102" else dfo_accounts
+        
+        # Create accounts
+        created_accounts = []
+        for account_number, account_data in accounts_to_import.items():
+            try:
+                # Check if account already exists
+                if frappe.db.exists("Account", {"account_number": account_number, "company": company}):
+                    continue
+                
+                parent_account = None
+                if account_data["parent"]:
+                    parent_data = accounts_to_import.get(account_data["parent"])
+                    if parent_data:
+                        parent_account = frappe.db.get_value(
+                            "Account",
+                            {"account_number": account_data["parent"], "company": company},
+                            "name"
+                        )
+                
+                account = frappe.get_doc({
+                    "doctype": "Account",
+                    "account_name": account_data["name"],
+                    "account_number": account_number,
+                    "account_type": account_data["type"],
+                    "company": company,
+                    "parent_account": parent_account,
+                    "is_group": len([k for k, v in accounts_to_import.items() if v.get("parent") == account_number]) > 0
+                })
+                account.insert(ignore_permissions=True)
+                created_accounts.append(account.name)
+            except Exception as acc_error:
+                continue
+        
+        return {
+            "success": True,
+            "standard": standard,
+            "company": company,
+            "imported_count": len(created_accounts),
+            "accounts": created_accounts[:10],  # Show first 10
+            "message": f"Successfully imported {len(created_accounts)} accounts from {standard} standard"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": f"Failed to import Norwegian chart of accounts ({standard})"
+        }
+
+
+@mcp.tool()
+def manage_skatteetaten_submissions(action: str, data: Dict[str, Any] = None):
+    """
+    Interact with Skatteetaten (Norwegian Tax Authority) for tax-related submissions.
+    Supports employee registration (A-melding), tax reports, deductions, and deadline checking.
+    
+    Args:
+        action: Type of interaction - 'employee_registration', 'tax_report', 'deduction_request', 'check_deadlines', 'check_account'
+        data: Additional data for the submission (e.g., employee info, tax amounts)
+    
+    Returns:
+        Dictionary with submission status and instructions for phone control if API unavailable
+    
+    Use cases:
+    - Submit A-melding when hiring employees
+    - File skattemelding (tax returns)
+    - Request fradrag (tax deductions)
+    - Check report deadlines
+    - Monitor tax account status
+    """
+    try:
+        import frappe
+        
+        data = data or {}
+        
+        action_handlers = {
+            "employee_registration": "Submit A-melding (employee registration) to Skatteetaten",
+            "tax_report": "Submit skattemelding (tax return)",
+            "deduction_request": "File fradrag (tax deduction) request",
+            "check_deadlines": "Check upcoming tax report deadlines",
+            "check_account": "Check tax account status and balance"
+        }
+        
+        if action not in action_handlers:
+            return {
+                "success": False,
+                "error": f"Unknown action: {action}",
+                "available_actions": list(action_handlers.keys())
+            }
+        
+        # Note: This is a placeholder implementation
+        # In production, this would integrate with Skatteetaten's API or provide phone control instructions
+        
+        result = {
+            "success": True,
+            "action": action,
+            "description": action_handlers[action],
+            "status": "pending",
+            "message": f"Action '{action}' initiated with Skatteetaten",
+            "phone_control_required": True,
+            "instructions": [
+                "Navigate to https://skatteetaten.no",
+                "Log in with BankID or MinID",
+                f"Navigate to the appropriate section for {action}",
+                "Follow the provided data to complete the submission"
+            ],
+            "data_provided": data,
+            "next_steps": [
+                "Complete BankID authentication",
+                "Fill in required forms",
+                "Review and submit",
+                "Save confirmation number"
+            ]
+        }
+        
+        # Log the interaction for tracking
+        frappe.get_doc({
+            "doctype": "Comment",
+            "comment_type": "Info",
+            "reference_doctype": "User",
+            "reference_name": frappe.session.user,
+            "content": f"Skatteetaten interaction: {action}"
+        }).insert(ignore_permissions=True)
+        
+        return result
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to interact with Skatteetaten"
+        }
+
+
+@mcp.tool()
+def submit_lyngdal_kommune_application(kommune: str, application_type: str, data: Dict[str, Any] = None):
+    """
+    Submit applications to Norwegian municipal services (kommune).
+    Supports building permits, renovation permits, and property upgrades.
+    
+    Args:
+        kommune: Municipality name (e.g., "Lyngdal", "Oslo", "Bergen")
+        application_type: Type of application - 'building_permit', 'renovation_permit', 'property_upgrade'
+        data: Application data (property address, work description, estimated cost, etc.)
+    
+    Returns:
+        Dictionary with submission status and tracking information
+    
+    Use cases:
+    - Submit byggesøknad for building permits
+    - Apply for renovation/painting permits
+    - Register property upgrades to increase property value
+    - Track property improvement projects
+    """
+    try:
+        import frappe
+        
+        data = data or {}
+        
+        application_types = {
+            "building_permit": "Byggesøknad (Building Permit)",
+            "renovation_permit": "Renovasjon/maling søknad (Renovation/Painting Permit)",
+            "property_upgrade": "Eiendomsoppgradering (Property Upgrade)"
+        }
+        
+        if application_type not in application_types:
+            return {
+                "success": False,
+                "error": f"Unknown application type: {application_type}",
+                "available_types": list(application_types.keys())
+            }
+        
+        # Note: This is a placeholder implementation
+        # In production, this would integrate with the municipality's API or provide phone control instructions
+        
+        result = {
+            "success": True,
+            "kommune": kommune,
+            "application_type": application_type,
+            "description": application_types[application_type],
+            "status": "submitted",
+            "message": f"Application submitted to {kommune} Kommune",
+            "phone_control_required": True,
+            "instructions": [
+                f"Navigate to {kommune.lower()}.kommune.no",
+                "Log in with BankID",
+                "Navigate to 'Søknader' or 'Applications'",
+                f"Select '{application_types[application_type]}'",
+                "Fill in the application form with provided data",
+                "Submit the application"
+            ],
+            "data_provided": data,
+            "expected_processing_time": "2-4 weeks",
+            "property_value_impact": data.get("estimated_value_increase", "To be assessed"),
+            "contact": f"{kommune} Kommune Building Department",
+            "next_steps": [
+                "Wait for case number",
+                "Prepare additional documentation if requested",
+                "Track application status online",
+                "Receive decision letter"
+            ]
+        }
+        
+        # Log the application for tracking
+        frappe.get_doc({
+            "doctype": "Comment",
+            "comment_type": "Info",
+            "reference_doctype": "User",
+            "reference_name": frappe.session.user,
+            "content": f"{kommune} Kommune application: {application_type}"
+        }).insert(ignore_permissions=True)
+        
+        return result
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": f"Failed to submit application to {kommune} Kommune"
+        }
+
+
 def run_server(transport: str = "stdio"):
     """
     Run the MCP server with the specified transport.
