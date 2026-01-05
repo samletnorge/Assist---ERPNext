@@ -10,13 +10,14 @@ from typing import Dict, Any
 
 
 @frappe.whitelist()
-def remove_image_background(image_data: str, enhance: bool = True) -> Dict[str, Any]:
+def remove_image_background(image_data: str, enhance: bool = True, use_altlokalt_api: bool = False) -> Dict[str, Any]:
     """
     Remove background from an image.
     
     Args:
         image_data: Base64 encoded image data
         enhance: Whether to also enhance the image
+        use_altlokalt_api: If True, uses receipt-ocr.altlokalt.com API
     
     Returns:
         Dictionary with processed image data
@@ -26,17 +27,21 @@ def remove_image_background(image_data: str, enhance: bool = True) -> Dict[str, 
         
         if isinstance(enhance, str):
             enhance = enhance.lower() == "true"
+        if isinstance(use_altlokalt_api, str):
+            use_altlokalt_api = use_altlokalt_api.lower() == "true"
         
         processed_image = process_camera_image(
             image_data,
             remove_bg=True,
             enhance=enhance,
-            return_base64=True
+            return_base64=True,
+            use_altlokalt_api=use_altlokalt_api
         )
         
         return {
             "success": True,
             "processed_image": processed_image,
+            "api_used": "altlokalt" if use_altlokalt_api else "rembg",
             "message": "Background removed successfully"
         }
     except Exception as e:
@@ -366,4 +371,49 @@ def create_s1000d_module(
             "success": False,
             "error": str(e),
             "message": "Failed to create S1000D module"
+        }
+
+
+@frappe.whitelist()
+def import_github_repos(
+    username: str = None,
+    organization: str = None,
+    github_token: str = None,
+    import_as_assets: bool = True,
+    asset_category: str = None
+) -> Dict[str, Any]:
+    """
+    Import all GitHub repositories as assets in ERPNext.
+    
+    Args:
+        username: GitHub username
+        organization: GitHub organization name
+        github_token: GitHub personal access token (optional)
+        import_as_assets: Create as assets (True) or items only (False)
+        asset_category: Asset category to assign
+    
+    Returns:
+        Dictionary with import results
+    """
+    try:
+        from erpnext_assist.mcp_server.server import import_github_repos_as_assets
+        
+        if isinstance(import_as_assets, str):
+            import_as_assets = import_as_assets.lower() == "true"
+        
+        result = import_github_repos_as_assets(
+            username=username,
+            organization=organization,
+            github_token=github_token,
+            import_as_assets=import_as_assets,
+            asset_category=asset_category
+        )
+        
+        return result
+    except Exception as e:
+        frappe.log_error(f"GitHub import error: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to import GitHub repositories"
         }

@@ -695,6 +695,119 @@ result = create_s1000d_data_module(
 
 ---
 
+## Example 14: GitHub Repos as Assets Importer
+
+**Tool Name**: `github_asset_importer`
+
+**Description**: Import all GitHub repositories from a user or organization as assets
+
+**Category**: Custom
+
+**AI Provider**: Any
+
+**Prompt Template**:
+```
+Import all GitHub repositories from {{username}} as assets.
+Category: {{asset_category}}
+```
+
+**Parameters**:
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| username | Text | * | GitHub username (or use organization) |
+| organization | Text | * | GitHub organization name |
+| github_token | Password | | Personal access token (for private repos) |
+| import_as_assets | Check | | Create as assets (default: true) |
+| asset_category | Text | | Asset category (default: Software) |
+
+*One of username or organization is required
+
+**Action Type**: Custom Code
+
+**Custom Code**:
+```python
+from erpnext_assist.mcp_server.server import import_github_repos_as_assets
+
+result = import_github_repos_as_assets(
+    username=context.get('username'),
+    organization=context.get('organization'),
+    github_token=context.get('github_token'),
+    import_as_assets=context.get('import_as_assets', True),
+    asset_category=context.get('asset_category', 'Software')
+)
+
+# Returns imported repos with metadata
+# Each repo becomes an asset with GitHub metadata
+```
+
+**Use Cases**:
+- **Software Asset Management**: Track all company repositories as assets
+- **Open Source Portfolio**: Import personal GitHub portfolio
+- **Organization Audit**: Create asset records for all org repos
+- **Project Tracking**: Monitor repository stars, forks, and languages
+- **License Management**: Track software licenses across repos
+
+**Features**:
+- Automatically handles pagination (100+ repos)
+- Captures metadata: stars, forks, language, description
+- Creates both item and asset records
+- Supports private repositories with token
+- Skips existing assets to avoid duplicates
+
+**Example Usage**:
+```python
+# Import personal repos
+result = import_github_repos_as_assets(
+    username="octocat",
+    import_as_assets=True,
+    asset_category="Software"
+)
+
+# Import organization repos (with private access)
+result = import_github_repos_as_assets(
+    organization="github",
+    github_token="ghp_xxxxxxxxxxxx",
+    import_as_assets=True,
+    asset_category="Code Repository"
+)
+```
+
+**Return Format**:
+```json
+{
+    "success": true,
+    "target": "octocat",
+    "target_type": "user",
+    "total_repos": 25,
+    "imported_count": 23,
+    "skipped_count": 2,
+    "imported_assets": [
+        {
+            "repo_name": "Hello-World",
+            "item_code": "REPO-HELLO-WORLD",
+            "url": "https://github.com/octocat/Hello-World",
+            "language": "Python",
+            "stars": 1234
+        }
+    ],
+    "skipped_repos": [
+        {
+            "name": "test-repo",
+            "reason": "already exists"
+        }
+    ]
+}
+```
+
+**Benefits**:
+- **Asset Tracking**: All repos tracked in ERPNext asset management
+- **Metadata Capture**: Stars, forks, language automatically captured
+- **Bulk Import**: Import hundreds of repos in one operation
+- **Private Repos**: Support for private repositories with token
+- **Duplicate Prevention**: Automatically skips existing assets
+
+---
+
 ## Need More Examples?
 
 Check the community forum or create an issue on GitHub with your use case!

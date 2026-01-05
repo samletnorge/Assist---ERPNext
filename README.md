@@ -14,7 +14,7 @@ An ERPNext custom app that extends ERPNext with AI-powered tools using the Model
 - 📸 **AI Background Removal** - Professional product images with U²-Net AI
 - 🤖 **Universal AI Support** - Works with Claude, OpenAI, Ollama, and custom providers
 - 🔒 **Privacy-First** - All processing happens locally on your server
-- 📦 **12 Ready-to-Use Tools** - Marketplace, camera, barcode, receipt scanner, price comparison, voice queries, RDS 81346, S1000D, and more
+- 📦 **13 Ready-to-Use Tools** - Marketplace, camera, barcode, receipt scanner, price comparison, voice queries, RDS 81346, S1000D, GitHub import, and more
 - 🌐 **Offline Capable** - Full functionality without internet connection
 
 ## Features
@@ -86,6 +86,14 @@ An ERPNext custom app that extends ERPNext with AI-powered tools using the Model
 - Support for multiple content types (procedural, descriptive, fault, crew)
 - **MCP Tool**: `create_s1000d_data_module`
 - **API Endpoint**: `erpnext_assist.api.create_s1000d_module`
+
+#### 9. GitHub Repos as Assets Importer
+- Import all GitHub repositories from a user or organization
+- Automatically create assets or items for each repository
+- Capture metadata: stars, forks, language, description
+- Support for private repos (with GitHub token)
+- **MCP Tool**: `import_github_repos_as_assets`
+- **API Endpoint**: `erpnext_assist.api.import_github_repos`
 
 ## Architecture
 

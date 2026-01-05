@@ -833,6 +833,186 @@ def create_s1000d_data_module(
         }
 
 
+# New Tool 9: GitHub Repos as Assets Importer
+@mcp.tool()
+def import_github_repos_as_assets(
+    username: Optional[str] = None,
+    organization: Optional[str] = None,
+    github_token: Optional[str] = None,
+    import_as_assets: bool = True,
+    asset_category: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Import all GitHub repositories as assets in ERPNext.
+    Fetches repos from a user or organization and creates asset records.
+    
+    Args:
+        username: GitHub username to import repos from
+        organization: GitHub organization name to import repos from
+        github_token: GitHub personal access token (optional, for private repos)
+        import_as_assets: If True, creates assets; if False, creates items only
+        asset_category: Asset category to assign (e.g., 'Software', 'Code Repository')
+    
+    Returns:
+        Dictionary with imported repos and asset creation status
+    """
+    try:
+        import frappe
+        import requests
+        
+        if not username and not organization:
+            return {
+                "success": False,
+                "error": "Either username or organization must be provided",
+                "message": "Please specify a GitHub username or organization"
+            }
+        
+        # Determine API endpoint
+        if username:
+            api_url = f"https://api.github.com/users/{username}/repos"
+            target = username
+            target_type = "user"
+        else:
+            api_url = f"https://api.github.com/orgs/{organization}/repos"
+            target = organization
+            target_type = "organization"
+        
+        # Set up headers with token if provided
+        headers = {"Accept": "application/vnd.github.v3+json"}
+        if github_token:
+            headers["Authorization"] = f"token {github_token}"
+        
+        # Fetch all repos (handle pagination)
+        all_repos = []
+        page = 1
+        per_page = 100
+        
+        while True:
+            response = requests.get(
+                api_url,
+                headers=headers,
+                params={"page": page, "per_page": per_page},
+                timeout=30
+            )
+            
+            if response.status_code != 200:
+                return {
+                    "success": False,
+                    "error": f"GitHub API returned status {response.status_code}",
+                    "message": response.json().get("message", "Failed to fetch repos")
+                }
+            
+            repos = response.json()
+            if not repos:
+                break
+            
+            all_repos.extend(repos)
+            page += 1
+            
+            # GitHub returns fewer than per_page items on last page
+            if len(repos) < per_page:
+                break
+        
+        # Import repos as assets
+        imported_assets = []
+        skipped_repos = []
+        
+        for repo in all_repos:
+            try:
+                repo_name = repo["name"]
+                repo_full_name = repo["full_name"]
+                repo_url = repo["html_url"]
+                description = repo["description"] or f"GitHub repository: {repo_full_name}"
+                language = repo.get("language", "Unknown")
+                stars = repo.get("stargazers_count", 0)
+                forks = repo.get("forks_count", 0)
+                
+                # Check if asset/item already exists
+                item_code = f"REPO-{repo_name.upper()[:20]}"
+                existing = frappe.db.exists("Asset", {"item_code": item_code})
+                
+                if existing:
+                    skipped_repos.append({"name": repo_name, "reason": "already exists"})
+                    continue
+                
+                # Create item first
+                item = frappe.get_doc({
+                    "doctype": "Item",
+                    "item_code": item_code,
+                    "item_name": repo_name,
+                    "item_group": "Software",
+                    "description": description,
+                    "is_stock_item": 0,
+                    "is_fixed_asset": 1 if import_as_assets else 0,
+                })
+                
+                # Add custom fields for GitHub metadata
+                item.append("custom_fields", {
+                    "label": "GitHub URL",
+                    "value": repo_url
+                })
+                item.append("custom_fields", {
+                    "label": "Language",
+                    "value": language
+                })
+                item.append("custom_fields", {
+                    "label": "Stars",
+                    "value": str(stars)
+                })
+                item.append("custom_fields", {
+                    "label": "Forks",
+                    "value": str(forks)
+                })
+                
+                item.insert(ignore_permissions=True)
+                
+                # Create asset if requested
+                if import_as_assets:
+                    asset = frappe.get_doc({
+                        "doctype": "Asset",
+                        "item_code": item_code,
+                        "asset_name": repo_name,
+                        "asset_category": asset_category or "Software",
+                        "gross_purchase_amount": 0,
+                        "is_existing_asset": 1,
+                        "available_for_use_date": frappe.utils.today(),
+                    })
+                    asset.insert(ignore_permissions=True)
+                
+                imported_assets.append({
+                    "repo_name": repo_name,
+                    "item_code": item_code,
+                    "url": repo_url,
+                    "language": language,
+                    "stars": stars
+                })
+                
+            except Exception as repo_error:
+                skipped_repos.append({
+                    "name": repo.get("name", "unknown"),
+                    "reason": str(repo_error)
+                })
+        
+        return {
+            "success": True,
+            "target": target,
+            "target_type": target_type,
+            "total_repos": len(all_repos),
+            "imported_count": len(imported_assets),
+            "skipped_count": len(skipped_repos),
+            "imported_assets": imported_assets,
+            "skipped_repos": skipped_repos,
+            "message": f"Imported {len(imported_assets)} repositories from {target}"
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to create S1000D data module"
+        }
+
+
 def run_server(transport: str = "stdio"):
     """
     Run the MCP server with the specified transport.
