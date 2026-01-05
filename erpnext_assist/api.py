@@ -669,9 +669,39 @@ def post_rental_listing(
         from erpnext_assist.mcp_server.server import post_asset_for_rental
         import json
         
-        # Convert string parameters
-        rental_rate = float(rental_rate)
-        image_list = json.loads(images) if images else None
+        # Validate and convert rental_rate
+        try:
+            rental_rate = float(rental_rate)
+            if rental_rate < 0:
+                return {
+                    "success": False,
+                    "error": "rental_rate must be a positive number",
+                    "message": "Invalid rental rate"
+                }
+        except (ValueError, TypeError) as e:
+            return {
+                "success": False,
+                "error": f"Invalid rental_rate: {str(e)}",
+                "message": "rental_rate must be a valid number"
+            }
+        
+        # Validate and parse images
+        image_list = None
+        if images:
+            try:
+                image_list = json.loads(images)
+                if not isinstance(image_list, list):
+                    return {
+                        "success": False,
+                        "error": "images must be a JSON array",
+                        "message": "Invalid images format"
+                    }
+            except json.JSONDecodeError as e:
+                return {
+                    "success": False,
+                    "error": f"Invalid JSON for images: {str(e)}",
+                    "message": "images must be valid JSON array"
+                }
         
         result = post_asset_for_rental(
             asset_code=asset_code,

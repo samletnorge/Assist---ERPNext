@@ -229,34 +229,51 @@ def get_rental_eligible_assets(
         if asset_category:
             filters["asset_category"] = asset_category
         
-        # Get assets
+        # Get assets with fixed_asset_account field
         assets = frappe.get_all(
             "Asset",
             filters=filters,
             fields=["name", "asset_name", "item_code", "asset_category", "gross_purchase_amount", 
-                    "available_for_use_date", "location", "custodian", "status"]
+                    "available_for_use_date", "location", "custodian", "status", "fixed_asset_account"]
         )
+        
+        # Get all unique account names to fetch in bulk
+        account_names = list(set(
+            asset.get("fixed_asset_account") 
+            for asset in assets 
+            if asset.get("fixed_asset_account")
+        ))
+        
+        # Fetch all accounts in a single query
+        account_cache = {}
+        if account_names:
+            accounts = frappe.get_all(
+                "Account",
+                filters={"name": ["in", account_names]},
+                fields=["name", "account_number"]
+            )
+            account_cache = {acc.name: acc for acc in accounts}
         
         # Filter by chart of account code if provided
         rental_eligible_assets = []
         for asset in assets:
-            # Check if asset has a fixed asset account with matching code
-            asset_doc = frappe.get_doc("Asset", asset.name)
             include_asset = False
             
             if chart_of_account_code:
                 # Check if the asset's fixed asset account contains the chart code
-                if asset_doc.get("fixed_asset_account"):
-                    account = frappe.get_doc("Account", asset_doc.fixed_asset_account)
-                    if chart_of_account_code in account.account_number or chart_of_account_code in account.name:
+                if asset.get("fixed_asset_account") and asset.fixed_asset_account in account_cache:
+                    account = account_cache[asset.fixed_asset_account]
+                    account_num = account.get("account_number") or ""
+                    if chart_of_account_code in account_num or chart_of_account_code in account.name:
                         include_asset = True
             else:
                 # If no specific chart code filter, include all
                 # But preferably those with tool-related account codes (1202, 1203, 1204)
-                if asset_doc.get("fixed_asset_account"):
-                    account = frappe.get_doc("Account", asset_doc.fixed_asset_account)
+                if asset.get("fixed_asset_account") and asset.fixed_asset_account in account_cache:
+                    account = account_cache[asset.fixed_asset_account]
+                    account_num = account.get("account_number") or ""
                     tool_codes = ["1202", "1203", "1204"]
-                    if any(code in account.account_number or code in account.name for code in tool_codes):
+                    if any(code in account_num or code in account.name for code in tool_codes):
                         include_asset = True
                 else:
                     # If no fixed asset account, include it anyway
