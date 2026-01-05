@@ -7,7 +7,9 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "listing_type",
   "item_code",
+  "asset_code",
   "marketplace",
   "title",
   "description",
@@ -23,17 +25,32 @@
  ],
  "fields": [
   {
+   "default": "Sale",
+   "fieldname": "listing_type",
+   "fieldtype": "Select",
+   "label": "Listing Type",
+   "options": "Sale\nRental",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.listing_type=='Sale'",
    "fieldname": "item_code",
    "fieldtype": "Link",
    "label": "Item Code",
-   "options": "Item",
-   "reqd": 1
+   "options": "Item"
+  },
+  {
+   "depends_on": "eval:doc.listing_type=='Rental'",
+   "fieldname": "asset_code",
+   "fieldtype": "Link",
+   "label": "Asset Code",
+   "options": "Asset"
   },
   {
    "fieldname": "marketplace",
    "fieldtype": "Select",
    "label": "Marketplace",
-   "options": "Facebook Marketplace\nFINN.no\nOther",
+   "options": "Facebook Marketplace\nFINN.no\nleid.no\nOther Rental Service\nOther",
    "reqd": 1
   },
   {
@@ -69,7 +86,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
-   "options": "Draft\nPosted\nSold\nExpired\nCancelled"
+   "options": "Draft\nPosted\nSold\nRented\nExpired\nCancelled"
   },
   {
    "fieldname": "listing_url",
