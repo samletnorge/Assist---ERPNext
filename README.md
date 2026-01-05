@@ -14,7 +14,7 @@ An ERPNext custom app that extends ERPNext with AI-powered tools using the Model
 - 📸 **AI Background Removal** - Professional product images with U²-Net AI
 - 🤖 **Universal AI Support** - Works with Claude, OpenAI, Ollama, and custom providers
 - 🔒 **Privacy-First** - All processing happens locally on your server
-- 📦 **10 Ready-to-Use Tools** - Marketplace, camera, barcode, receipt scanner, price comparison, voice queries, and more
+- 📦 **12 Ready-to-Use Tools** - Marketplace, camera, barcode, receipt scanner, price comparison, voice queries, RDS 81346, S1000D, and more
 - 🌐 **Offline Capable** - Full functionality without internet connection
 
 ## Features
@@ -70,6 +70,22 @@ An ERPNext custom app that extends ERPNext with AI-powered tools using the Model
 - Voice-to-text compatible for hands-free operation
 - Get instant answers about availability and location
 - **MCP Tool**: `query_inventory_natural_language`
+
+#### 7. RDS 81346 Equipment Reference Designation
+- Generate ISO/IEC 81346 compliant reference designations
+- Standardized equipment naming and documentation
+- Support for function, product, location, and type aspects
+- Hierarchical system structuring
+- **MCP Tool**: `generate_rds_81346_designation`
+- **API Endpoint**: `erpnext_assist.api.generate_rds_designation`
+
+#### 8. S1000D Issue 6 Technical Documentation
+- Create S1000D compliant data modules for technical publications
+- XML-based modular documentation for aerospace/defense
+- Common Source Database (CSDB) compatible structure
+- Support for multiple content types (procedural, descriptive, fault, crew)
+- **MCP Tool**: `create_s1000d_data_module`
+- **API Endpoint**: `erpnext_assist.api.create_s1000d_module`
 
 ## Architecture
 

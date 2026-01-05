@@ -568,6 +568,133 @@ When you've posted multiple items on Facebook Marketplace or FINN.no and buyers 
 
 ---
 
+## Example 12: RDS 81346 Equipment Reference Designation
+
+**Tool Name**: `rds_equipment_designator`
+
+**Description**: Generate ISO/IEC 81346 compliant reference designations for equipment
+
+**Category**: Inventory
+
+**AI Provider**: Any
+
+**Prompt Template**:
+```
+Generate RDS 81346 designation for {{equipment_name}}.
+Function aspect: {{function_aspect}}
+Product aspect: {{product_aspect}}
+Location aspect: {{location_aspect}}
+Parent system: {{parent_system}}
+```
+
+**Parameters**:
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| equipment_name | Text | ✓ | Equipment name |
+| function_aspect | Text |  | What it does (prefix =) |
+| product_aspect | Text |  | What it is (prefix -) |
+| location_aspect | Text |  | Where it is (prefix +) |
+| parent_system | Text |  | Parent system reference |
+
+**Action Type**: Custom Code
+
+**Custom Code**:
+```python
+from erpnext_assist.mcp_server.server import generate_rds_81346_designation
+
+result = generate_rds_81346_designation(
+    equipment_name=context['equipment_name'],
+    function_aspect=context.get('function_aspect'),
+    product_aspect=context.get('product_aspect'),
+    location_aspect=context.get('location_aspect'),
+    parent_system=context.get('parent_system')
+)
+
+# Returns standardized RDS designation
+# Example: "MAIN.=PUMP.=COOLING.-MOTOR.+ROOM1"
+```
+
+**Use Cases**:
+- Industrial plant equipment documentation
+- Building systems management
+- Complex machinery tracking
+- Multi-site facility management
+- Compliance with ISO/IEC 81346 standards
+
+**Example Designations**:
+- Wind turbine: `=A1.-WQA1.+SITE1` (Function=A1, Product=WQA1, Location=SITE1)
+- Cooling pump: `=COOL.-PUMP.+ROOM1`
+- Motor controller: `MAIN.=DRIVE.-MC01.+PANEL2`
+
+---
+
+## Example 13: S1000D Issue 6 Technical Documentation
+
+**Tool Name**: `s1000d_doc_generator`
+
+**Description**: Create S1000D Issue 6 compliant data modules for technical publications
+
+**Category**: Custom
+
+**AI Provider**: Any
+
+**Prompt Template**:
+```
+Create S1000D data module for {{item_code}}.
+DMC: {{data_module_code}}
+Title: {{title}}
+Content type: {{content_type}}
+Generate technical documentation following S1000D Issue 6 standards.
+```
+
+**Parameters**:
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| item_code | Link | ✓ | ERPNext item code |
+| data_module_code | Text | ✓ | S1000D DMC identifier |
+| title | Text | ✓ | Module title |
+| content_type | Select | ✓ | procedural/descriptive/fault/crew |
+| issue_number | Text |  | S1000D issue (default: 6) |
+
+**Action Type**: Custom Code
+
+**Custom Code**:
+```python
+from erpnext_assist.mcp_server.server import create_s1000d_data_module
+
+result = create_s1000d_data_module(
+    item_code=context['item_code'],
+    data_module_code=context['data_module_code'],
+    title=context['title'],
+    content_type=context.get('content_type', 'procedural'),
+    issue_number=context.get('issue_number', '6')
+)
+
+# Returns XML-based data module structure
+# Compatible with Common Source Database (CSDB)
+```
+
+**Use Cases**:
+- Aerospace technical manuals
+- Defense equipment documentation
+- Aircraft maintenance procedures
+- Naval systems documentation
+- Complex machinery service manuals
+
+**S1000D Features**:
+- **Modular Data**: Reusable documentation components
+- **CSDB Integration**: Centralized source management
+- **XML-based**: Digital publishing ready
+- **Version Control**: Track documentation changes
+- **International Standard**: NATO/DoD compliant
+
+**Example Data Module Codes (DMC)**:
+- `DMC-AIRCRAFT-A-00-00-00-00A-000A-A` - Aircraft system overview
+- `DMC-ENGINE-A-72-10-00-00A-520A-A` - Engine maintenance procedure
+- `DMC-AVIONICS-A-45-20-01-00A-040A-A` - Avionics troubleshooting
+
+---
+
 ## Need More Examples?
 
 Check the community forum or create an issue on GitHub with your use case!

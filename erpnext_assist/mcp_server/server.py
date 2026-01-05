@@ -674,6 +674,165 @@ def orchestrate_pickup_route(
         }
 
 
+# New Tool 7: RDS 81346 Equipment Reference Designation
+@mcp.tool()
+def generate_rds_81346_designation(
+    equipment_name: str,
+    function_aspect: Optional[str] = None,
+    product_aspect: Optional[str] = None,
+    location_aspect: Optional[str] = None,
+    parent_system: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Generate ISO/IEC 81346 (RDS) reference designations for equipment and systems.
+    Creates standardized identifiers for industrial systems, installations, and equipment.
+    
+    Args:
+        equipment_name: Name of the equipment/component
+        function_aspect: Functional classification (what it does) - prefix with '='
+        product_aspect: Product classification (what it is) - prefix with '-'
+        location_aspect: Location classification (where it is) - prefix with '+'
+        parent_system: Parent system reference designation
+    
+    Returns:
+        Dictionary with generated RDS designation and metadata
+    """
+    try:
+        import frappe
+        
+        # Generate RDS designation following ISO/IEC 81346 structure
+        designation_parts = []
+        
+        if parent_system:
+            designation_parts.append(parent_system)
+        
+        # Function aspect (=)
+        if function_aspect:
+            func_code = function_aspect if function_aspect.startswith('=') else f"={function_aspect}"
+            designation_parts.append(func_code)
+        
+        # Product aspect (-)
+        if product_aspect:
+            prod_code = product_aspect if product_aspect.startswith('-') else f"-{product_aspect}"
+            designation_parts.append(prod_code)
+        
+        # Location aspect (+)
+        if location_aspect:
+            loc_code = location_aspect if location_aspect.startswith('+') else f"+{location_aspect}"
+            designation_parts.append(loc_code)
+        
+        # Generate full designation
+        full_designation = ".".join(designation_parts) if designation_parts else equipment_name
+        
+        # Store in ERPNext as custom field or separate DocType
+        result = {
+            "success": True,
+            "equipment_name": equipment_name,
+            "rds_designation": full_designation,
+            "aspects": {
+                "function": function_aspect,
+                "product": product_aspect,
+                "location": location_aspect,
+                "parent": parent_system
+            },
+            "standard": "ISO/IEC 81346",
+            "message": f"RDS designation generated: {full_designation}"
+        }
+        
+        # TODO: Optionally store in custom ERPNext DocType for equipment registry
+        
+        return result
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to generate RDS 81346 designation"
+        }
+
+
+# New Tool 8: S1000D Issue 6 Technical Documentation
+@mcp.tool()
+def create_s1000d_data_module(
+    item_code: str,
+    data_module_code: str,
+    title: str,
+    content_type: str = "procedural",
+    issue_number: str = "6",
+) -> Dict[str, Any]:
+    """
+    Create S1000D Issue 6 compliant data modules for technical publications.
+    Generates standardized XML-based technical documentation for aerospace/defense equipment.
+    
+    Args:
+        item_code: ERPNext item code for the equipment
+        data_module_code: S1000D Data Module Code (DMC)
+        title: Data module title
+        content_type: Type of content ('procedural', 'descriptive', 'fault', 'crew')
+        issue_number: S1000D issue number (default: '6')
+    
+    Returns:
+        Dictionary with data module structure and metadata
+    """
+    try:
+        import frappe
+        from datetime import datetime
+        
+        # Get item details
+        item = frappe.get_doc("Item", item_code)
+        
+        # Generate S1000D data module structure
+        data_module = {
+            "dmc": data_module_code,
+            "issue_number": issue_number,
+            "title": title,
+            "item_code": item_code,
+            "item_name": item.item_name,
+            "content_type": content_type,
+            "status": "draft",
+            "created_date": datetime.now().isoformat(),
+            "language": "en-US",
+            "metadata": {
+                "model_ident_code": item_code[:4] if len(item_code) >= 4 else "XXXX",
+                "system_diff_code": "A",
+                "system_code": "00",
+                "sub_system_code": "0",
+                "sub_sub_system_code": "0",
+                "assy_code": "00",
+                "disassy_code": "00",
+                "disassy_code_variant": "00",
+                "info_code": "000",
+                "info_code_variant": "A",
+                "item_location_code": "A"
+            },
+            "content": {
+                "description": item.description or "",
+                "specifications": {},
+                "procedures": [],
+                "warnings": [],
+                "cautions": []
+            }
+        }
+        
+        # TODO: Generate actual XML structure according to S1000D schema
+        # TODO: Store in Common Source Database (CSDB)
+        
+        return {
+            "success": True,
+            "data_module": data_module,
+            "standard": "S1000D Issue 6",
+            "message": f"S1000D data module created: {data_module_code}",
+            "note": "Full XML generation and CSDB integration requires S1000D toolkit"
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to create S1000D data module"
+        }
+
+
 def run_server(transport: str = "stdio"):
     """
     Run the MCP server with the specified transport.

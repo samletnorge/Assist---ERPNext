@@ -283,3 +283,87 @@ def plan_pickup_route(
             "error": str(e),
             "message": "Failed to plan pickup route"
         }
+
+
+@frappe.whitelist()
+def generate_rds_designation(
+    equipment_name: str,
+    function_aspect: str = None,
+    product_aspect: str = None,
+    location_aspect: str = None,
+    parent_system: str = None
+) -> Dict[str, Any]:
+    """
+    Generate RDS 81346 reference designation for equipment.
+    
+    Args:
+        equipment_name: Name of equipment
+        function_aspect: Functional classification
+        product_aspect: Product classification
+        location_aspect: Location classification
+        parent_system: Parent system designation
+    
+    Returns:
+        Dictionary with RDS designation
+    """
+    try:
+        from erpnext_assist.mcp_server.server import generate_rds_81346_designation
+        
+        result = generate_rds_81346_designation(
+            equipment_name=equipment_name,
+            function_aspect=function_aspect,
+            product_aspect=product_aspect,
+            location_aspect=location_aspect,
+            parent_system=parent_system
+        )
+        
+        return result
+    except Exception as e:
+        frappe.log_error(f"RDS designation error: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to generate RDS designation"
+        }
+
+
+@frappe.whitelist()
+def create_s1000d_module(
+    item_code: str,
+    data_module_code: str,
+    title: str,
+    content_type: str = "procedural",
+    issue_number: str = "6"
+) -> Dict[str, Any]:
+    """
+    Create S1000D Issue 6 data module for technical documentation.
+    
+    Args:
+        item_code: ERPNext item code
+        data_module_code: S1000D DMC
+        title: Module title
+        content_type: Content type
+        issue_number: S1000D issue number
+    
+    Returns:
+        Dictionary with data module structure
+    """
+    try:
+        from erpnext_assist.mcp_server.server import create_s1000d_data_module
+        
+        result = create_s1000d_data_module(
+            item_code=item_code,
+            data_module_code=data_module_code,
+            title=title,
+            content_type=content_type,
+            issue_number=issue_number
+        )
+        
+        return result
+    except Exception as e:
+        frappe.log_error(f"S1000D module error: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to create S1000D module"
+        }
