@@ -1,6 +1,21 @@
 # ERPNext Assist
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![ERPNext](https://img.shields.io/badge/ERPNext-v14%20%7C%20v15-green.svg)](https://erpnext.com/)
+
+> 🚀 Transform ERPNext into an AI-powered platform with visual tool creation, automatic background removal, and universal AI integration.
+
 An ERPNext custom app that extends ERPNext with AI-powered tools using the Model Context Protocol (MCP). This app enables users to draft custom tools visually through the UI without programming knowledge, and integrates with various AI providers (online and offline).
+
+## ✨ Quick Highlights
+
+- 🎨 **No-Code Tool Builder** - Create custom tools visually, no programming required
+- 📸 **AI Background Removal** - Professional product images with U²-Net AI
+- 🤖 **Universal AI Support** - Works with Claude, OpenAI, Ollama, and custom providers
+- 🔒 **Privacy-First** - All processing happens locally on your server
+- 📦 **3 Ready-to-Use Tools** - Marketplace posting, camera item addition, barcode scanning
+- 🌐 **Offline Capable** - Full functionality without internet connection
 
 ## Features
 
