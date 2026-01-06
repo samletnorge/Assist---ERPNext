@@ -56,22 +56,26 @@ def load_user_drafted_tools():
 # Tool 1: Marketplace Posting Tools
 @mcp.tool()
 def post_to_marketplace(
-    item_code: str,
     marketplace: str,
     title: str,
     description: str,
     price: float,
+    item_code: Optional[str] = None,
+    asset_code: Optional[str] = None,
+    listing_type: str = "Sale",
     images: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """
-    Post stock items or assets to marketplaces like Facebook Marketplace or FINN.no.
+    Post stock items or assets to marketplaces like Facebook Marketplace, FINN.no, leid.no, or other rental services.
     
     Args:
-        item_code: The ERPNext item code to post
-        marketplace: Target marketplace ('facebook' or 'finn.no')
+        marketplace: Target marketplace ('Facebook Marketplace', 'FINN.no', 'leid.no', 'Other Rental Service', 'Other')
         title: Listing title
         description: Listing description
-        price: Listing price
+        price: Listing price (sale price or rental rate)
+        item_code: The ERPNext item code to post (for Sale listings)
+        asset_code: The ERPNext asset code to post (for Rental listings)
+        listing_type: Type of listing ('Sale' or 'Rental')
         images: List of image URLs or paths
     
     Returns:
@@ -81,19 +85,44 @@ def post_to_marketplace(
         # Import frappe here to avoid issues if frappe is not installed
         import frappe
         
-        # Get item details from ERPNext
-        item = frappe.get_doc("Item", item_code)
+        # Validate that either item_code or asset_code is provided
+        if listing_type == "Sale" and not item_code:
+            return {
+                "success": False,
+                "error": "item_code is required for Sale listings",
+                "message": "Failed to create marketplace listing"
+            }
+        
+        if listing_type == "Rental" and not asset_code:
+            return {
+                "success": False,
+                "error": "asset_code is required for Rental listings",
+                "message": "Failed to create marketplace listing"
+            }
+        
+        # Get item or asset details from ERPNext
+        if listing_type == "Sale":
+            item = frappe.get_doc("Item", item_code)
+        else:
+            asset = frappe.get_doc("Asset", asset_code)
         
         # Create marketplace listing record
-        listing = frappe.get_doc({
+        listing_data = {
             "doctype": "Marketplace Listing",
-            "item_code": item_code,
+            "listing_type": listing_type,
             "marketplace": marketplace,
             "title": title,
             "description": description,
             "price": price,
             "status": "Draft",
-        })
+        }
+        
+        if listing_type == "Sale":
+            listing_data["item_code"] = item_code
+        else:
+            listing_data["asset_code"] = asset_code
+        
+        listing = frappe.get_doc(listing_data)
         
         if images:
             for image_url in images:
@@ -106,8 +135,10 @@ def post_to_marketplace(
             "success": True,
             "listing_id": listing.name,
             "marketplace": marketplace,
-            "item_code": item_code,
-            "message": f"Listing created successfully for {marketplace}"
+            "listing_type": listing_type,
+            "item_code": item_code if listing_type == "Sale" else None,
+            "asset_code": asset_code if listing_type == "Rental" else None,
+            "message": f"{listing_type} listing created successfully for {marketplace}"
         }
     except Exception as e:
         return {
@@ -162,6 +193,164 @@ def track_saved_search(
             "success": False,
             "error": str(e),
             "message": "Failed to save search"
+        }
+
+
+@mcp.tool()
+def get_rental_eligible_assets(
+    company: Optional[str] = None,
+    asset_category: Optional[str] = None,
+    chart_of_account_code: Optional[str] = None,
+) -> Dict[str, Any]:
+    """
+    Get list of company-owned assets that are eligible for rental posting to leid.no and other rental services.
+    Assets are identified by their chart of account codes (e.g., 1202 - Maskiner og anlegg, 1203 - Inventar, 1204 - Transportmidler).
+    
+    Args:
+        company: Company name (optional, defaults to default company)
+        asset_category: Filter by asset category (optional)
+        chart_of_account_code: Filter by chart of account code like '1202', '1203', '1204' (optional)
+    
+    Returns:
+        Dictionary with list of rental-eligible assets
+    """
+    try:
+        import frappe
+        
+        if not company:
+            company = frappe.defaults.get_user_default("Company")
+        
+        # Build filters
+        filters = {
+            "company": company,
+            "status": ["in", ["Available for use", "Partially Depreciated", "Fully Depreciated"]]
+        }
+        
+        if asset_category:
+            filters["asset_category"] = asset_category
+        
+        # Get assets with fixed_asset_account field
+        assets = frappe.get_all(
+            "Asset",
+            filters=filters,
+            fields=["name", "asset_name", "item_code", "asset_category", "gross_purchase_amount", 
+                    "available_for_use_date", "location", "custodian", "status", "fixed_asset_account"]
+        )
+        
+        # Get all unique account names to fetch in bulk
+        account_names = list(set(
+            asset.get("fixed_asset_account") 
+            for asset in assets 
+            if asset.get("fixed_asset_account")
+        ))
+        
+        # Fetch all accounts in a single query
+        account_cache = {}
+        if account_names:
+            accounts = frappe.get_all(
+                "Account",
+                filters={"name": ["in", account_names]},
+                fields=["name", "account_number"]
+            )
+            account_cache = {acc.name: acc for acc in accounts}
+        
+        # Filter by chart of account code if provided
+        rental_eligible_assets = []
+        for asset in assets:
+            include_asset = False
+            
+            if chart_of_account_code:
+                # Check if the asset's fixed asset account contains the chart code
+                if asset.get("fixed_asset_account") and asset.fixed_asset_account in account_cache:
+                    account = account_cache[asset.fixed_asset_account]
+                    account_num = account.get("account_number") or ""
+                    if chart_of_account_code in account_num or chart_of_account_code in account.name:
+                        include_asset = True
+            else:
+                # If no specific chart code filter, include all
+                # But preferably those with tool-related account codes (1202, 1203, 1204)
+                if asset.get("fixed_asset_account") and asset.fixed_asset_account in account_cache:
+                    account = account_cache[asset.fixed_asset_account]
+                    account_num = account.get("account_number") or ""
+                    tool_codes = ["1202", "1203", "1204"]
+                    if any(code in account_num or code in account.name for code in tool_codes):
+                        include_asset = True
+                else:
+                    # If no fixed asset account, include it anyway
+                    include_asset = True
+            
+            if include_asset:
+                rental_eligible_assets.append({
+                    "asset_code": asset.name,
+                    "asset_name": asset.asset_name,
+                    "item_code": asset.item_code,
+                    "category": asset.asset_category,
+                    "purchase_amount": asset.gross_purchase_amount,
+                    "location": asset.location,
+                    "custodian": asset.custodian,
+                    "status": asset.status,
+                })
+        
+        return {
+            "success": True,
+            "company": company,
+            "count": len(rental_eligible_assets),
+            "assets": rental_eligible_assets,
+            "message": f"Found {len(rental_eligible_assets)} rental-eligible assets"
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to retrieve rental-eligible assets"
+        }
+
+
+@mcp.tool()
+def post_asset_for_rental(
+    asset_code: str,
+    marketplace: str,
+    title: str,
+    description: str,
+    rental_rate: float,
+    images: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """
+    Post company-owned assets (tools, equipment) to rental services like leid.no.
+    This is a convenience wrapper around post_to_marketplace specifically for rental listings.
+    
+    Args:
+        asset_code: The ERPNext asset code to post for rental
+        marketplace: Target rental service ('leid.no', 'Other Rental Service', etc.)
+        title: Listing title
+        description: Listing description
+        rental_rate: Rental rate per period (day/week/month)
+        images: List of image URLs or paths
+    
+    Returns:
+        Dictionary with posting status and listing ID
+    """
+    try:
+        # Use the post_to_marketplace function with rental parameters
+        result = post_to_marketplace(
+            marketplace=marketplace,
+            title=title,
+            description=description,
+            price=rental_rate,
+            asset_code=asset_code,
+            listing_type="Rental",
+            images=images,
+        )
+        
+        if result["success"]:
+            result["message"] = f"Asset {asset_code} posted for rental on {marketplace}"
+        
+        return result
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to post asset for rental"
         }
 
 

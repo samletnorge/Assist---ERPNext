@@ -30,6 +30,8 @@ An ERPNext custom app that extends ERPNext with AI-powered tools using the Model
 
 #### 1. Marketplace Posting Tool with Pickup Orchestration & Norwegian Messages
 - Post stock items or assets to marketplaces like Facebook Marketplace and FINN.no
+- **NEW: Asset Rental Posting** - Post company-owned assets (tools, equipment) to rental services like leid.no
+- **NEW: Chart of Account Integration** - Automatically identify rental-eligible assets by account codes (1202 - Maskiner og anlegg, 1203 - Inventar, 1204 - Transportmidler)
 - Automatically track and manage listings
 - Save and monitor marketplace searches based on purchase or material requests
 - **NEW**: Orchestrate efficient pickup routes by contacting sellers and scheduling optimal pickup days
@@ -37,7 +39,7 @@ An ERPNext custom app that extends ERPNext with AI-powered tools using the Model
 - **NEW**: Phone control integration for automated marketplace browsing
 - **NEW**: Material Request integration - automatically search for items from your purchase requests
 - **DocTypes**: Marketplace Listing, Saved Marketplace Search
-- **MCP Tools**: `post_to_marketplace`, `track_saved_search`, `orchestrate_pickup_route`, `manage_marketplace_listings_with_phone_ctrl`
+- **MCP Tools**: `post_to_marketplace`, `post_asset_for_rental`, `get_rental_eligible_assets`, `track_saved_search`, `orchestrate_pickup_route`, `manage_marketplace_listings_with_phone_ctrl`
 
 #### 2. Camera-based Quick Item Addition with Dual AI Background Removal
 - Quickly add new items (stock or assets) using camera capture
@@ -288,19 +290,50 @@ python -m erpnext_assist.mcp_server.server
 
 ### Using Built-in Tools
 
-#### Post to Marketplace
+#### Post to Marketplace (Sale)
 ```python
 import frappe
 from erpnext_assist.mcp_server.server import post_to_marketplace
 
 result = post_to_marketplace(
-    item_code="ITEM-001",
     marketplace="Facebook Marketplace",
     title="Quality Office Chair",
     description="Excellent condition, barely used",
     price=250.00,
+    item_code="ITEM-001",
+    listing_type="Sale",
     images=["/files/chair1.jpg", "/files/chair2.jpg"]
 )
+```
+
+#### Post Asset for Rental (NEW)
+```python
+from erpnext_assist.mcp_server.server import post_asset_for_rental
+
+# Post a hydraulic drill to leid.no
+result = post_asset_for_rental(
+    asset_code="DRILL-HYD-001",
+    marketplace="leid.no",
+    title="Professional Hydraulic Drill",
+    description="High-power drill for heavy construction work. Daily/weekly rates available.",
+    rental_rate=750.00,  # Rate per day/week
+    images=["/files/drill1.jpg", "/files/drill2.jpg"]
+)
+```
+
+#### Get Rental-Eligible Assets (NEW)
+```python
+from erpnext_assist.mcp_server.server import get_rental_eligible_assets
+
+# Get all tools and equipment suitable for rental
+result = get_rental_eligible_assets(
+    company="My Company",
+    chart_of_account_code="1202"  # Maskiner og anlegg (Machinery and equipment)
+)
+
+# Returns list of assets with their details
+for asset in result["assets"]:
+    print(f"{asset['asset_name']} - {asset['category']}")
 ```
 
 #### Quick Add Item from Camera with Background Removal

@@ -604,3 +604,119 @@ def submit_kommune_application(kommune: str, application_type: str, data: str = 
             "error": str(e),
             "message": f"Failed to submit application to {kommune} Kommune"
         }
+
+
+@frappe.whitelist()
+def get_rental_assets(
+    company: str = None,
+    asset_category: str = None,
+    chart_of_account_code: str = None
+) -> Dict[str, Any]:
+    """
+    Get list of company-owned assets eligible for rental posting.
+    
+    Args:
+        company: Company name (optional)
+        asset_category: Filter by asset category (optional)
+        chart_of_account_code: Filter by chart of account code (e.g., '1202', '1203', '1204')
+    
+    Returns:
+        Dictionary with list of rental-eligible assets
+    """
+    try:
+        from erpnext_assist.mcp_server.server import get_rental_eligible_assets
+        
+        result = get_rental_eligible_assets(
+            company=company,
+            asset_category=asset_category,
+            chart_of_account_code=chart_of_account_code
+        )
+        
+        return result
+    except Exception as e:
+        frappe.log_error(f"Get rental assets error: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to retrieve rental-eligible assets"
+        }
+
+
+@frappe.whitelist()
+def post_rental_listing(
+    asset_code: str,
+    marketplace: str,
+    title: str,
+    description: str,
+    rental_rate: float,
+    images: str = None
+) -> Dict[str, Any]:
+    """
+    Post an asset to rental services like leid.no.
+    
+    Args:
+        asset_code: Asset code to post
+        marketplace: Target rental service
+        title: Listing title
+        description: Listing description
+        rental_rate: Rental rate per period
+        images: JSON string of image URLs
+    
+    Returns:
+        Dictionary with posting result
+    """
+    try:
+        from erpnext_assist.mcp_server.server import post_asset_for_rental
+        import json
+        
+        # Validate and convert rental_rate
+        try:
+            rental_rate = float(rental_rate)
+            if rental_rate < 0:
+                return {
+                    "success": False,
+                    "error": "rental_rate must be a positive number",
+                    "message": "Invalid rental rate"
+                }
+        except (ValueError, TypeError) as e:
+            return {
+                "success": False,
+                "error": f"Invalid rental_rate: {str(e)}",
+                "message": "rental_rate must be a valid number"
+            }
+        
+        # Validate and parse images
+        image_list = None
+        if images:
+            try:
+                image_list = json.loads(images)
+                if not isinstance(image_list, list):
+                    return {
+                        "success": False,
+                        "error": "images must be a JSON array",
+                        "message": "Invalid images format"
+                    }
+            except json.JSONDecodeError as e:
+                return {
+                    "success": False,
+                    "error": f"Invalid JSON for images: {str(e)}",
+                    "message": "images must be valid JSON array"
+                }
+        
+        result = post_asset_for_rental(
+            asset_code=asset_code,
+            marketplace=marketplace,
+            title=title,
+            description=description,
+            rental_rate=rental_rate,
+            images=image_list
+        )
+        
+        return result
+    except Exception as e:
+        frappe.log_error(f"Post rental listing error: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to post asset for rental"
+        }

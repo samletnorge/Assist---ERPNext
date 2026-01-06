@@ -1142,6 +1142,193 @@ print(f"Property value impact: {result['property_value_impact']}")
 
 ---
 
+## Example 12: Asset Rental Posting to leid.no 🛠️
+
+**Tool Name**: `post_tools_for_rental`
+
+**Description**: Automatically post company-owned tools and equipment to rental services like leid.no
+
+**Category**: Assets
+
+**AI Provider**: Any
+
+**Prompt Template**:
+```
+List all rental-eligible assets from chart of account code {{account_code}} for {{company}}.
+For each asset, create a rental listing on {{marketplace}} with appropriate pricing.
+Use asset details to generate compelling descriptions highlighting the tool's capabilities.
+```
+
+**Parameters**:
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| company | Link | ✓ | Company name |
+| account_code | Text | ✓ | Chart of account code (1202/1203/1204) |
+| marketplace | Select | ✓ | leid.no/Other Rental Service |
+| rental_rate | Currency | ✓ | Base rental rate per day |
+
+**Action Type**: Custom Code
+
+**Custom Code**:
+```python
+from erpnext_assist.mcp_server.server import get_rental_eligible_assets, post_asset_for_rental
+
+# Get rental-eligible assets
+result = get_rental_eligible_assets(
+    company=context['company'],
+    chart_of_account_code=context['account_code']
+)
+
+listings_created = []
+for asset in result.get('assets', []):
+    # Create rental listing
+    listing_result = post_asset_for_rental(
+        asset_code=asset['asset_code'],
+        marketplace=context['marketplace'],
+        title=f"{asset['asset_name']} - Professional Rental",
+        description=f"High-quality {asset['category']} available for rent. Located at {asset.get('location', 'Main Office')}.",
+        rental_rate=float(context['rental_rate']),
+        images=[]
+    )
+    
+    if listing_result.get('success'):
+        listings_created.append({
+            'asset': asset['asset_name'],
+            'listing_id': listing_result['listing_id']
+        })
+
+return {
+    'success': True,
+    'listings_created': len(listings_created),
+    'details': listings_created
+}
+```
+
+**Use Cases**:
+- **Equipment Rental Business**: Automatically list tools on rental platforms
+- **Asset Utilization**: Monetize idle company assets
+- **Seasonal Equipment**: Rent out tools during off-peak periods
+- **Construction Companies**: Share equipment across projects
+
+**Example Interactions**:
+
+AI Prompt: "Post all our machinery to leid.no for rental"
+```
+Tool will:
+1. Query assets with account code 1202 (Maskiner og anlegg)
+2. Create listings for each available asset
+3. Set appropriate rental rates
+4. Generate professional descriptions
+```
+
+**Real-World Usage**:
+```python
+from erpnext_assist.mcp_server.server import get_rental_eligible_assets, post_asset_for_rental
+
+# Step 1: Find tools suitable for rental
+tools = get_rental_eligible_assets(
+    company="Samlet Norge AS",
+    chart_of_account_code="1202"  # Machinery and equipment
+)
+
+print(f"Found {tools['count']} rental-eligible tools")
+
+# Step 2: Post a specific tool to leid.no
+result = post_asset_for_rental(
+    asset_code="DRILL-HYD-001",
+    marketplace="leid.no",
+    title="Professional Hydraulic Drill - Heavy Duty",
+    description="""
+    Professional-grade hydraulic drill suitable for:
+    - Construction sites
+    - Mining operations
+    - Heavy industrial work
+    
+    Specifications:
+    - Power: 3000W
+    - Max drill diameter: 50mm
+    - Weight: 15kg
+    
+    Includes:
+    - Carrying case
+    - 5 drill bits
+    - Safety gear
+    
+    Daily rate: 750 NOK
+    Weekly rate: 3500 NOK
+    Monthly rate: 10000 NOK
+    
+    Available immediately. Free delivery within Lyngdal area.
+    """,
+    rental_rate=750.00,
+    images=[
+        "/files/drill-front.jpg",
+        "/files/drill-side.jpg",
+        "/files/drill-bits.jpg"
+    ]
+)
+
+if result['success']:
+    print(f"✓ Listed on leid.no: {result['listing_id']}")
+```
+
+**Chart of Account Codes for Tools** (Norwegian NS 4102):
+
+| Code | Category | Examples |
+|------|----------|----------|
+| 1202 | Maskiner og anlegg (Machinery) | Drills, saws, heavy equipment |
+| 1203 | Inventar (Furniture/Fixtures) | Workbenches, tool cabinets, ladders |
+| 1204 | Transportmidler (Transport) | Trailers, vans, transport equipment |
+
+**Bulk Tool Posting Example**:
+```python
+# Post all tools from specific categories
+account_codes = ["1202", "1203", "1204"]
+
+for code in account_codes:
+    tools = get_rental_eligible_assets(
+        company="Samlet Norge AS",
+        chart_of_account_code=code
+    )
+    
+    for tool in tools['assets']:
+        # Calculate rental rate based on purchase amount
+        purchase_amount = tool.get('purchase_amount', 0)
+        daily_rate = purchase_amount * 0.05  # 5% of purchase price per day
+        
+        post_asset_for_rental(
+            asset_code=tool['asset_code'],
+            marketplace="leid.no",
+            title=f"{tool['asset_name']} - Professional Rental",
+            description=f"Professional {tool['category']} available for daily/weekly rental. Excellent condition.",
+            rental_rate=daily_rate
+        )
+```
+
+**Marketplace Listing Features**:
+- **Listing Type**: Automatically set to "Rental"
+- **Status Tracking**: Draft → Posted → Rented
+- **Asset Linking**: Direct link to Asset doctype
+- **Marketplace Options**: leid.no, Other Rental Service, Facebook, FINN.no
+- **Images**: Support for multiple asset images
+- **Pricing**: Flexible rental rate structure
+
+**Benefits**:
+- **Automated Listing**: Quickly post multiple assets
+- **Asset Tracking**: Link rentals to asset records
+- **Revenue Generation**: Monetize idle equipment
+- **Professional Listings**: Structured, complete information
+- **Multi-Platform**: Post to multiple rental services
+
+**Integration with ERPNext**:
+- Links to Asset module
+- Uses chart of accounts for categorization
+- Tracks rental history
+- Updates asset availability status
+- Records rental income
+
+---
+
 ## Need More Examples?
 
 Check the community forum or create an issue on GitHub with your use case!

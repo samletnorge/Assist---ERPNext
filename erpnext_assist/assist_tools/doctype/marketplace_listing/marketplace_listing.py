@@ -11,6 +11,13 @@ class MarketplaceListing(Document):
         if not self.currency:
             self.currency = frappe.defaults.get_global_default("currency") or "NOK"
         
+        # Validate that either item_code or asset_code is provided based on listing_type
+        if self.listing_type == "Sale" and not self.item_code:
+            frappe.throw("Item Code is required for Sale listings")
+        
+        if self.listing_type == "Rental" and not self.asset_code:
+            frappe.throw("Asset Code is required for Rental listings")
+        
         if self.status == "Posted" and not self.posted_on:
             self.posted_on = frappe.utils.now()
     
