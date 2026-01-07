@@ -807,3 +807,26 @@ def get_weather_forecast(
             "error": str(e),
             "message": "Failed to retrieve weather forecast"
         }
+
+
+@frappe.whitelist()
+def load_sample_seasonal_calendar() -> Dict[str, Any]:
+    """
+    Load sample seasonal calendar data for common Norwegian crops.
+    
+    Returns:
+        Dictionary with loading status and count of created entries
+    """
+    try:
+        from erpnext_assist.assist_tools.doctype.norwegian_seasonal_calendar.sample_data import create_sample_seasonal_calendar
+        
+        result = create_sample_seasonal_calendar()
+        
+        return result
+    except Exception as e:
+        frappe.log_error(f"Load sample calendar error: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to load sample seasonal calendar data"
+        }
