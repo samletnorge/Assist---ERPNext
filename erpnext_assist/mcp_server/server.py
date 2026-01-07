@@ -1781,6 +1781,135 @@ def submit_lyngdal_kommune_application(kommune: str, application_type: str, data
         }
 
 
+@mcp.tool()
+def get_norwegian_seasonal_calendar(
+    crop_name: Optional[str] = None,
+    climate_zone: Optional[str] = None,
+    crop_type: Optional[str] = None,
+    current_month_only: bool = False,
+) -> Dict[str, Any]:
+    """
+    Get Norwegian seasonal calendar for crop planting and harvesting schedules.
+    Provides guidance on when to plant and harvest crops in Norwegian climate zones.
+    
+    Args:
+        crop_name: Optional crop name to search for (e.g., "tomato", "carrot")
+        climate_zone: Norwegian climate zone - 'Southern Norway (Sør-Norge)', 'Eastern Norway (Østlandet)', 
+                      'Western Norway (Vestlandet)', 'Central Norway (Trøndelag)', 'Northern Norway (Nord-Norge)', or 'All Zones'
+        crop_type: Type of crop - 'Vegetable', 'Fruit', 'Grain', 'Legume', 'Herb', 'Root Vegetable', 'Leafy Green', 'Other'
+        current_month_only: If True, only returns crops to plant/harvest in current month
+    
+    Returns:
+        Dictionary with seasonal calendar information for Norwegian farming
+    
+    Use cases:
+    - Plan planting schedule for Norwegian farms
+    - Check when to sow seeds indoors vs outdoors
+    - Get harvest timing for crops in different Norwegian regions
+    - Understand crop requirements for Norwegian climate
+    """
+    try:
+        import frappe
+        from erpnext_assist.assist_tools.doctype.norwegian_seasonal_calendar.norwegian_seasonal_calendar import (
+            get_seasonal_calendar, get_current_month_crops
+        )
+        
+        if current_month_only:
+            # Get crops for current month
+            result = get_current_month_crops(climate_zone=climate_zone)
+            return {
+                "success": True,
+                **result
+            }
+        else:
+            # Get full seasonal calendar
+            calendars = get_seasonal_calendar(
+                crop_name=crop_name,
+                climate_zone=climate_zone,
+                crop_type=crop_type
+            )
+            
+            return {
+                "success": True,
+                "count": len(calendars),
+                "calendars": calendars,
+                "message": f"Found {len(calendars)} crops in seasonal calendar"
+            }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to retrieve seasonal calendar"
+        }
+
+
+@mcp.tool()
+def get_norwegian_weather_forecast(
+    location_name: str,
+    latitude: float,
+    longitude: float,
+    altitude: Optional[int] = None,
+) -> Dict[str, Any]:
+    """
+    Get weather forecast from yr.no (Norwegian Meteorological Institute) for farm locations.
+    Includes current conditions, hourly forecast, 7-day outlook, and farming recommendations.
+    
+    Args:
+        location_name: Name of farm or location (e.g., "Lyngdal Farm", "Oslo")
+        latitude: Latitude in decimal degrees (e.g., 59.9139 for Oslo)
+        longitude: Longitude in decimal degrees (e.g., 10.7522 for Oslo)
+        altitude: Altitude in meters above sea level (optional, improves accuracy)
+    
+    Returns:
+        Dictionary with weather forecast, farming recommendations, and frost warnings
+    
+    Use cases:
+    - Check weather before planting or harvesting
+    - Get frost warnings to protect crops
+    - Plan irrigation based on precipitation forecast
+    - Decide optimal days for spraying pesticides
+    - Monitor temperature for greenhouse management
+    
+    Example coordinates:
+    - Oslo: lat=59.9139, lon=10.7522
+    - Bergen: lat=60.3913, lon=5.3221
+    - Tromsø: lat=69.6492, lon=18.9553
+    - Stavanger: lat=58.9700, lon=5.7331
+    - Trondheim: lat=63.4305, lon=10.3951
+    """
+    try:
+        from erpnext_assist.utils.weather_yr_no import get_farm_weather_forecast
+        
+        # Validate coordinates
+        if not (-90 <= latitude <= 90):
+            return {
+                "success": False,
+                "error": "Latitude must be between -90 and 90 degrees"
+            }
+        
+        if not (-180 <= longitude <= 180):
+            return {
+                "success": False,
+                "error": "Longitude must be between -180 and 180 degrees"
+            }
+        
+        # Get weather forecast
+        forecast = get_farm_weather_forecast(
+            location_name=location_name,
+            latitude=latitude,
+            longitude=longitude,
+            altitude=altitude
+        )
+        
+        return forecast
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to retrieve weather forecast from yr.no"
+        }
+
+
 def run_server(transport: str = "stdio"):
     """
     Run the MCP server with the specified transport.

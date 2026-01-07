@@ -720,3 +720,113 @@ def post_rental_listing(
             "error": str(e),
             "message": "Failed to post asset for rental"
         }
+
+
+@frappe.whitelist()
+def get_seasonal_calendar(
+    crop_name: str = None,
+    climate_zone: str = None,
+    crop_type: str = None,
+    current_month_only: bool = False
+) -> Dict[str, Any]:
+    """
+    Get Norwegian seasonal calendar for crop planting and harvesting.
+    
+    Args:
+        crop_name: Crop name to search for (optional)
+        climate_zone: Norwegian climate zone (optional)
+        crop_type: Type of crop (optional)
+        current_month_only: Return only current month crops (optional)
+    
+    Returns:
+        Dictionary with seasonal calendar information
+    """
+    try:
+        from erpnext_assist.mcp_server.server import get_norwegian_seasonal_calendar
+        
+        if isinstance(current_month_only, str):
+            current_month_only = current_month_only.lower() == "true"
+        
+        result = get_norwegian_seasonal_calendar(
+            crop_name=crop_name,
+            climate_zone=climate_zone,
+            crop_type=crop_type,
+            current_month_only=current_month_only
+        )
+        
+        return result
+    except Exception as e:
+        frappe.log_error(f"Seasonal calendar error: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to retrieve seasonal calendar"
+        }
+
+
+@frappe.whitelist()
+def get_weather_forecast(
+    location_name: str,
+    latitude: float,
+    longitude: float,
+    altitude: int = None
+) -> Dict[str, Any]:
+    """
+    Get weather forecast from yr.no for Norwegian farm locations.
+    
+    Args:
+        location_name: Name of the location
+        latitude: Latitude in decimal degrees
+        longitude: Longitude in decimal degrees
+        altitude: Altitude in meters (optional)
+    
+    Returns:
+        Dictionary with weather forecast and farming recommendations
+    """
+    try:
+        from erpnext_assist.mcp_server.server import get_norwegian_weather_forecast
+        
+        # Convert string parameters to numbers
+        latitude = float(latitude)
+        longitude = float(longitude)
+        if altitude:
+            altitude = int(altitude)
+        
+        result = get_norwegian_weather_forecast(
+            location_name=location_name,
+            latitude=latitude,
+            longitude=longitude,
+            altitude=altitude
+        )
+        
+        return result
+    except Exception as e:
+        frappe.log_error(f"Weather forecast error: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to retrieve weather forecast"
+        }
+
+
+@frappe.whitelist()
+def load_sample_seasonal_calendar() -> Dict[str, Any]:
+    """
+    Load sample seasonal calendar data for common Norwegian crops.
+    
+    Returns:
+        Dictionary with loading status and count of created entries
+    """
+    try:
+        from erpnext_assist.assist_tools.doctype.norwegian_seasonal_calendar.sample_data import create_sample_seasonal_calendar
+        
+        result = create_sample_seasonal_calendar()
+        
+        return result
+    except Exception as e:
+        frappe.log_error(f"Load sample calendar error: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to load sample seasonal calendar data"
+        }

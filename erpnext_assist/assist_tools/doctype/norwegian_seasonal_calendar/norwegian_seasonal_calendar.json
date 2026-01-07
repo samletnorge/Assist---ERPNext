@@ -1,0 +1,133 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:crop_name",
+ "creation": "2026-01-07 22:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "crop_name",
+  "crop_type",
+  "norwegian_name",
+  "column_break_1",
+  "climate_zone",
+  "growing_season",
+  "section_break_2",
+  "planting_details",
+  "section_break_3",
+  "harvest_details",
+  "section_break_4",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "crop_name",
+   "fieldtype": "Data",
+   "label": "Crop Name (English)",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "crop_type",
+   "fieldtype": "Select",
+   "label": "Crop Type",
+   "options": "Vegetable\nFruit\nGrain\nLegume\nHerb\nRoot Vegetable\nLeafy Green\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "norwegian_name",
+   "fieldtype": "Data",
+   "label": "Norwegian Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "climate_zone",
+   "fieldtype": "Select",
+   "label": "Climate Zone",
+   "options": "Southern Norway (Sør-Norge)\nEastern Norway (Østlandet)\nWestern Norway (Vestlandet)\nCentral Norway (Trøndelag)\nNorthern Norway (Nord-Norge)\nAll Zones",
+   "reqd": 1
+  },
+  {
+   "fieldname": "growing_season",
+   "fieldtype": "Data",
+   "label": "Growing Season",
+   "description": "e.g., 'April - September'"
+  },
+  {
+   "fieldname": "section_break_2",
+   "fieldtype": "Section Break",
+   "label": "Planting Information"
+  },
+  {
+   "fieldname": "planting_details",
+   "fieldtype": "Table",
+   "label": "Planting Details",
+   "options": "Norwegian Seasonal Calendar Item",
+   "description": "Planting schedule by month"
+  },
+  {
+   "fieldname": "section_break_3",
+   "fieldtype": "Section Break",
+   "label": "Harvest Information"
+  },
+  {
+   "fieldname": "harvest_details",
+   "fieldtype": "Text Editor",
+   "label": "Harvest Details",
+   "description": "Details about when and how to harvest this crop"
+  },
+  {
+   "fieldname": "section_break_4",
+   "fieldtype": "Section Break",
+   "label": "Additional Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text Editor",
+   "label": "Notes",
+   "description": "Growing tips, soil requirements, pest management, etc."
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-01-07 22:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Assist Tools",
+ "name": "Norwegian Seasonal Calendar",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Agriculture User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

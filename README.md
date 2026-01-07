@@ -14,7 +14,8 @@ An ERPNext custom app that extends ERPNext with AI-powered tools using the Model
 - 📸 **AI Background Removal** - Professional product images with dual APIs (U²-Net local + altlokalt.com cloud)
 - 🤖 **Universal AI Support** - Works with Claude, OpenAI, Ollama, and custom providers
 - 🔒 **Privacy-First** - All processing happens locally on your server
-- 📦 **18 Ready-to-Use Tools** - Marketplace (Norwegian templates), camera, barcode, receipt scanner, price comparison, voice queries, RDS 81346, S1000D, GitHub import, warehouse finder, Norwegian accounting (NS 4102/DFØ), Skatteetaten tax integration, Kommune services, and more
+- 🌾 **Norwegian Farm Management** - Seasonal calendar (Norsk sesongkalender) and weather from yr.no for Norwegian farmers
+- 📦 **20 Ready-to-Use Tools** - Marketplace (Norwegian templates), camera, barcode, receipt scanner, price comparison, voice queries, RDS 81346, S1000D, GitHub import, warehouse finder, Norwegian accounting (NS 4102/DFØ), Skatteetaten tax integration, Kommune services, farm management, and more
 - 🇳🇴 **Norwegian Government Integration** - Skatteetaten (tax authority) and Kommune (municipal services)
 - 🌐 **Offline Capable** - Full functionality without internet connection
 
@@ -154,6 +155,26 @@ An ERPNext custom app that extends ERPNext with AI-powered tools using the Model
 - **MCP Tool**: `submit_lyngdal_kommune_application`
 - **API Endpoint**: `erpnext_assist.api.submit_kommune_application`
 
+#### 15. Norwegian Farm Management System 🌾
+- **Norsk Sesongkalender** - Norwegian seasonal planting and harvesting calendar
+- Tailored for Norwegian climate zones (Sør-Norge, Østlandet, Vestlandet, Trøndelag, Nord-Norge)
+- 10+ pre-loaded common Norwegian crops (tomato, potato, carrot, lettuce, strawberry, etc.)
+- Monthly planting schedules with indoor/outdoor/greenhouse guidance
+- Soil temperature requirements and growing tips
+- **Weather Integration from yr.no** - Norwegian Meteorological Institute forecasts
+- Current conditions, hourly and 7-day forecasts
+- Farming recommendations based on weather (frost warnings, irrigation planning, spraying windows)
+- Perfect for planning farm activities around Norwegian weather
+- **DocTypes**: Norwegian Seasonal Calendar, Norwegian Seasonal Calendar Item
+- **MCP Tools**: `get_norwegian_seasonal_calendar`, `get_norwegian_weather_forecast`
+- **API Endpoints**: `erpnext_assist.api.get_seasonal_calendar`, `erpnext_assist.api.get_weather_forecast`, `erpnext_assist.api.load_sample_seasonal_calendar`
+
+#### 16. Marketplace Integration for Farm Products
+- Post farm products (vegetables, fruits, berries) to FINN.no and Facebook Marketplace
+- Track listings and manage sales
+- Already integrated with existing marketplace posting tool
+- Support for selling fresh produce, eggs, honey, and other farm products
+
 ## 📋 Standards Compliance Matrix
 
 This app implements multiple international and Norwegian standards for various industries:
@@ -172,6 +193,8 @@ This app implements multiple international and Norwegian standards for various i
 | **Marketplace** | Facebook Marketplace | Social Commerce | ✅ Supported | International |
 | **Marketplace** | FINN.no | Norwegian Classifieds | ✅ Supported | Norway |
 | **GitHub Integration** | GitHub REST API v3 | Developer Platform | ✅ Full | International |
+| **Weather Forecast** | yr.no API v2.0 | Meteorological Data | ✅ Full | Norway (MET Norway) |
+| **Farm Calendar** | Norwegian Climate Zones | Agricultural Planning | ✅ Full | Norway |
 
 ### Standard Categories
 
@@ -187,6 +210,11 @@ This app implements multiple international and Norwegian standards for various i
 **Government & Municipal:**
 - Skatteetaten (Norwegian Tax Authority)
 - Norwegian Kommune services (all municipalities)
+
+**Agriculture & Weather:**
+- yr.no (Norwegian Meteorological Institute)
+- Norwegian seasonal farming calendar
+- Climate zone-specific crop planning
 
 **AI & Image Processing:**
 - U²-Net (Background removal - local)
@@ -384,6 +412,94 @@ from erpnext_assist.mcp_server.server import scan_barcode_for_location
 
 result = scan_barcode_for_location(barcode="1234567890")
 # Returns warehouse locations and stock levels
+```
+
+#### Get Norwegian Seasonal Calendar (NEW 🌾)
+```python
+from erpnext_assist.mcp_server.server import get_norwegian_seasonal_calendar
+
+# Get all crops for Southern Norway
+result = get_norwegian_seasonal_calendar(
+    climate_zone="Southern Norway (Sør-Norge)"
+)
+
+# Get current month planting activities
+result = get_norwegian_seasonal_calendar(
+    climate_zone="Eastern Norway (Østlandet)",
+    current_month_only=True
+)
+
+# Search for specific crop
+result = get_norwegian_seasonal_calendar(
+    crop_name="tomato"
+)
+
+# Or use the API from client-side JavaScript
+frappe.call({
+    method: "erpnext_assist.api.get_seasonal_calendar",
+    args: {
+        climate_zone: "Southern Norway (Sør-Norge)",
+        current_month_only: true
+    },
+    callback: function(r) {
+        console.log(r.message);
+    }
+});
+```
+
+#### Get Weather Forecast from yr.no (NEW 🌤️)
+```python
+from erpnext_assist.mcp_server.server import get_norwegian_weather_forecast
+
+# Get weather for Oslo
+result = get_norwegian_weather_forecast(
+    location_name="Oslo Farm",
+    latitude=59.9139,
+    longitude=10.7522,
+    altitude=100  # meters
+)
+
+# Returns:
+# - Current conditions (temperature, wind, humidity, precipitation)
+# - Hourly forecast for next 24 hours
+# - 7-day daily forecast
+# - Farming recommendations (frost warnings, irrigation planning, etc.)
+
+# Example coordinates for Norwegian cities:
+# Oslo: lat=59.9139, lon=10.7522
+# Bergen: lat=60.3913, lon=5.3221
+# Tromsø: lat=69.6492, lon=18.9553
+# Stavanger: lat=58.9700, lon=5.7331
+# Trondheim: lat=63.4305, lon=10.3951
+
+# Or use the API from client-side JavaScript
+frappe.call({
+    method: "erpnext_assist.api.get_weather_forecast",
+    args: {
+        location_name: "My Farm",
+        latitude: 59.9139,
+        longitude: 10.7522,
+        altitude: 100
+    },
+    callback: function(r) {
+        let forecast = r.message;
+        console.log("Current temperature:", forecast.current.temperature);
+        console.log("Farming tips:", forecast.farming_recommendations);
+    }
+});
+```
+
+#### Load Sample Seasonal Calendar Data (NEW 🌱)
+```python
+# Load 10+ common Norwegian crops into the seasonal calendar
+frappe.call({
+    method: "erpnext_assist.api.load_sample_seasonal_calendar",
+    callback: function(r) {
+        console.log(r.message);
+        // Loads: Tomato, Carrot, Potato, Lettuce, Strawberry, 
+        //        Pea, Cabbage, Onion, Cucumber, Rhubarb
+    }
+});
 ```
 
 ## MCP Client Configuration
