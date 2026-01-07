@@ -1,0 +1,73 @@
+{
+ "actions": [],
+ "creation": "2026-01-07 22:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "activity_type",
+  "month",
+  "activity_description",
+  "column_break_1",
+  "indoor_outdoor",
+  "soil_temperature",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "activity_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Activity Type",
+   "options": "Sowing Indoors\nSowing Outdoors\nTransplanting\nDirect Seeding\nGreenhouse Planting\nTunnel Planting",
+   "reqd": 1
+  },
+  {
+   "fieldname": "month",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Month",
+   "options": "January\nFebruary\nMarch\nApril\nMay\nJune\nJuly\nAugust\nSeptember\nOctober\nNovember\nDecember",
+   "reqd": 1
+  },
+  {
+   "fieldname": "activity_description",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Activity Description"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "indoor_outdoor",
+   "fieldtype": "Select",
+   "label": "Indoor/Outdoor",
+   "options": "Indoor\nOutdoor\nGreenhouse\nTunnel"
+  },
+  {
+   "fieldname": "soil_temperature",
+   "fieldtype": "Data",
+   "label": "Min Soil Temperature",
+   "description": "Minimum soil temperature in Celsius"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-01-07 22:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Assist Tools",
+ "name": "Norwegian Seasonal Calendar Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
