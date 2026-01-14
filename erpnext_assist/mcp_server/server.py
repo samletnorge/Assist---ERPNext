@@ -9,8 +9,11 @@ both built-in tools and dynamically loaded user-drafted tools from the UI.
 import os
 import sys
 import json
+import requests
 from typing import Any, Dict, List, Optional
+from datetime import datetime
 from mcp.server.fastmcp import FastMCP
+from bs4 import BeautifulSoup
 
 # Initialize MCP server
 mcp = FastMCP("ERPNext Assist")
@@ -1787,7 +1790,8 @@ def get_daily_briefing(
     include_notifications: bool = True,
     include_metrics: bool = True,
     web_urls: Optional[List[str]] = None,
-    max_summary_length: int = 500
+    max_summary_length: int = 500,
+    low_stock_threshold: int = 10
 ) -> Dict[str, Any]:
     """
     Generate a daily briefing with ERPNext status updates and relevant information from web sources.
@@ -1798,6 +1802,7 @@ def get_daily_briefing(
         include_metrics: Include key business metrics (default: True)
         web_urls: Optional list of URLs to fetch and summarize (e.g., news articles, health info)
         max_summary_length: Maximum length for web content summaries (default: 500)
+        low_stock_threshold: Threshold for low stock alert (default: 10)
     
     Returns:
         Dictionary with daily briefing including:
@@ -1818,9 +1823,6 @@ def get_daily_briefing(
     """
     try:
         import frappe
-        from datetime import datetime
-        import requests
-        from bs4 import BeautifulSoup
         
         briefing = {
             "success": True,
@@ -1896,16 +1898,16 @@ def get_daily_briefing(
                 except:
                     pass
                 
-                # Low stock items count
+                # Low stock items count - uses configurable threshold
                 try:
-                    # This is a simplified check - in production you'd check against reorder levels
                     low_stock_items = frappe.db.sql("""
                         SELECT COUNT(*) as count
                         FROM `tabBin`
-                        WHERE actual_qty < 10 AND actual_qty > 0
-                    """, as_dict=True)
+                        WHERE actual_qty < %s AND actual_qty > 0
+                    """, (low_stock_threshold,), as_dict=True)
                     if low_stock_items:
                         metrics["low_stock_items"] = low_stock_items[0].get("count", 0)
+                        metrics["low_stock_threshold"] = low_stock_threshold
                 except:
                     pass
                 
@@ -1917,12 +1919,18 @@ def get_daily_briefing(
         
         # Fetch and summarize web content
         if web_urls:
+            # Complete User-Agent string for better compatibility
+            user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            
             for url in web_urls:
                 try:
-                    # Fetch the web page
-                    response = requests.get(url, timeout=10, headers={
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                    })
+                    # Fetch the web page with proper headers
+                    response = requests.get(
+                        url, 
+                        timeout=10, 
+                        headers={'User-Agent': user_agent},
+                        verify=True  # Verify SSL certificates for security
+                    )
                     response.raise_for_status()
                     
                     # Parse the HTML
@@ -1951,14 +1959,22 @@ def get_daily_briefing(
                             content_text = ' '.join([p.get_text().strip() for p in paragraphs])
                             break
                     
-                    # Fallback to all paragraphs if no content found
+                    # Fallback to first paragraphs if no content found
+                    # Limit based on estimated paragraph length to approximate max_summary_length
                     if not content_text:
                         paragraphs = soup.find_all('p')
-                        content_text = ' '.join([p.get_text().strip() for p in paragraphs[:10]])
+                        max_paragraphs = max(5, max_summary_length // 100)  # Estimate ~100 chars per paragraph
+                        content_text = ' '.join([p.get_text().strip() for p in paragraphs[:max_paragraphs]])
                     
-                    # Truncate to max length
+                    # Truncate to max length at word boundary for better readability
                     if len(content_text) > max_summary_length:
-                        content_text = content_text[:max_summary_length] + "..."
+                        # Find the last space before max_summary_length
+                        truncated = content_text[:max_summary_length]
+                        last_space = truncated.rfind(' ')
+                        if last_space > max_summary_length * 0.8:  # Only use word boundary if not too far back
+                            content_text = truncated[:last_space] + "..."
+                        else:
+                            content_text = truncated + "..."
                     
                     briefing["web_content"].append({
                         "url": url,
