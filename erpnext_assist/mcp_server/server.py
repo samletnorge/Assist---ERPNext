@@ -1824,10 +1824,21 @@ def get_daily_briefing(
     try:
         import frappe
         
+        # Helper function to safely get current user
+        def get_current_user():
+            try:
+                if hasattr(frappe, 'session') and hasattr(frappe.session, 'user'):
+                    return frappe.session.user
+            except:
+                pass
+            return "Guest"
+        
+        current_user = get_current_user()
+        
         briefing = {
             "success": True,
             "timestamp": datetime.now().isoformat(),
-            "user": frappe.session.user if hasattr(frappe, 'session') else "Guest",
+            "user": current_user,
             "date": datetime.now().strftime("%A, %B %d, %Y"),
             "erpnext_status": {},
             "web_content": [],
@@ -1835,14 +1846,14 @@ def get_daily_briefing(
         }
         
         # Gather ERPNext status information
-        if include_tasks:
+        if include_tasks and current_user != "Guest":
             try:
                 # Get pending ToDos for current user
                 todos = frappe.get_all(
                     "ToDo",
                     filters={
                         "status": ["in", ["Open", "Pending"]],
-                        "allocated_to": frappe.session.user
+                        "allocated_to": current_user
                     },
                     fields=["name", "description", "priority", "date"],
                     order_by="priority desc, date asc",
@@ -1857,13 +1868,13 @@ def get_daily_briefing(
                     "error": f"Could not fetch tasks: {str(e)}"
                 }
         
-        if include_notifications:
+        if include_notifications and current_user != "Guest":
             try:
                 # Get recent notifications
                 notifications = frappe.get_all(
                     "Notification Log",
                     filters={
-                        "for_user": frappe.session.user,
+                        "for_user": current_user,
                         "read": 0
                     },
                     fields=["subject", "type", "document_type", "document_name", "creation"],
@@ -1888,14 +1899,14 @@ def get_daily_briefing(
                 try:
                     open_sales_orders = frappe.db.count("Sales Order", {"status": "To Deliver and Bill"})
                     metrics["open_sales_orders"] = open_sales_orders
-                except:
+                except Exception:
                     pass
                 
                 # Count of pending purchase orders
                 try:
                     pending_purchase_orders = frappe.db.count("Purchase Order", {"status": ["in", ["To Receive and Bill", "To Receive"]]})
                     metrics["pending_purchase_orders"] = pending_purchase_orders
-                except:
+                except Exception:
                     pass
                 
                 # Low stock items count - uses configurable threshold
@@ -1908,7 +1919,7 @@ def get_daily_briefing(
                     if low_stock_items:
                         metrics["low_stock_items"] = low_stock_items[0].get("count", 0)
                         metrics["low_stock_threshold"] = low_stock_threshold
-                except:
+                except Exception:
                     pass
                 
                 briefing["erpnext_status"]["metrics"] = metrics
