@@ -1329,6 +1329,136 @@ for code in account_codes:
 
 ---
 
+## Example 8: Vegvesen Road Project Tracking & Strategic Forecasting
+
+**Tool Name**: `track_road_projects_and_forecast`
+
+**Description**: Track road construction projects from Norwegian Public Roads Administration (Vegvesen) and forecast high-value locations for strategic planning
+
+**Category**: Strategy & Planning
+
+**AI Provider**: Any
+
+**Prompt Template**:
+```
+Track road projects in county {{county}} from Vegvesen NVDB API.
+Analyze their strategic value for {{business_purpose}}.
+Forecast location value for our {{asset_type}} at coordinates {{location}}.
+Provide recommendations for strategic decisions.
+```
+
+**Parameters**:
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| county | Data | ✗ | County code (e.g., '9745') |
+| business_purpose | Select | ✓ | warehouse_placement/property_investment/logistics_planning |
+| asset_type | Data | ✗ | Type of asset to consider (warehouse, facility, etc.) |
+| location | Data | ✗ | Coordinates (lat,long) for value forecast |
+
+**Action Type**: API Call
+
+**API Endpoint**: `erpnext_assist.api.fetch_vegvesen_road_projects`
+
+**Use Cases**:
+
+### 1. Warehouse Site Selection
+```python
+# Fetch and track projects in Vestfold og Telemark
+from erpnext_assist.mcp_server.server import track_vegvesen_road_projects
+
+result = track_vegvesen_road_projects(
+    county="9745",
+    sync_to_erpnext=True,
+    update_existing=False
+)
+
+print(f"Tracked {result['projects_fetched']} road projects")
+print(f"Synced {result['projects_synced']} to ERPNext")
+```
+
+### 2. Strategic Location Forecasting
+```python
+# Forecast value of a potential warehouse location
+from erpnext_assist.mcp_server.server import forecast_location_value
+
+result = forecast_location_value(
+    latitude=59.1234,
+    longitude=10.2345,
+    search_radius_km=20.0
+)
+
+print(f"Location Value: {result['value_forecast']['value_level']}")
+print(f"Nearby Projects: {result['value_forecast']['nearby_projects_count']}")
+print(f"Total Investment: {result['value_forecast']['total_investment_nok']} NOK")
+print("\nRecommendations:")
+for rec in result['recommendations']:
+    print(f"- {rec}")
+```
+
+### 3. Map Visualization
+```python
+# Get road projects for map display with impact analysis
+from erpnext_assist.mcp_server.server import plot_road_projects_on_map
+
+result = plot_road_projects_on_map(
+    county="9745",
+    strategic_value="High",
+    include_impact_analysis=True
+)
+
+# result['map_data'] contains:
+# - Project locations (lat/long)
+# - Strategic value indicators
+# - Estimated costs
+# - Nearby warehouses and impact analysis
+```
+
+### 4. Impact Analysis on Existing Assets
+```python
+# Analyze impact of a specific road project on nearby assets
+from erpnext_assist.api import analyze_road_project_impact
+
+result = analyze_road_project_impact(
+    project_id="RV-9745-001",
+    radius_km=15.0
+)
+
+impact = result['impact_analysis']
+print(f"Found {len(impact['nearby_warehouses'])} nearby warehouses")
+for warehouse in impact['nearby_warehouses']:
+    print(f"- {warehouse['warehouse_name']} ({warehouse['distance_km']} km)")
+
+print(f"\nImpact Forecast: {impact['impact_description']}")
+```
+
+**Real-World Scenario**:
+
+Your company is looking to expand warehouse operations in Norway. The new E18 highway project will significantly improve logistics in certain regions.
+
+1. **Track Projects**: Use `track_vegvesen_road_projects()` to import all road projects in your target counties
+2. **Filter High-Value**: Query Road Projects with `strategic_value = "High"` or `"Very High"`
+3. **Analyze Locations**: For each potential warehouse site, use `forecast_location_value()` to assess future value
+4. **Decision Making**: 
+   - Sites near multiple high-value projects = Better long-term investment
+   - New roads = Reduced transportation costs
+   - Major intersections = Improved accessibility
+
+**Benefits**:
+- **Data-Driven Decisions**: Real infrastructure investment data from government source
+- **Strategic Planning**: Forecast future high-value areas before competition
+- **Cost Savings**: Place warehouses near future road infrastructure
+- **Risk Mitigation**: Avoid areas with uncertain infrastructure development
+- **Map Visualization**: See all projects and their strategic value on a map
+
+**Integration with ERPNext**:
+- Stores projects in `Road Project` DocType
+- Links to Warehouse locations
+- Calculates strategic value automatically
+- Analyzes nearby asset impact
+- Provides actionable recommendations
+
+---
+
 ## Need More Examples?
 
 Check the community forum or create an issue on GitHub with your use case!

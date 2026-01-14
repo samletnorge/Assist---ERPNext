@@ -1,0 +1,266 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:project_id",
+ "creation": "2026-01-14 18:44:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "project_info_section",
+  "project_id",
+  "project_name",
+  "project_description",
+  "column_break_1",
+  "county",
+  "county_name",
+  "status",
+  "location_section",
+  "road_number",
+  "road_name",
+  "municipality",
+  "column_break_2",
+  "latitude",
+  "longitude",
+  "geometry_data",
+  "project_details_section",
+  "start_date",
+  "end_date",
+  "estimated_cost",
+  "column_break_3",
+  "project_type",
+  "project_phase",
+  "priority",
+  "strategic_section",
+  "strategic_value",
+  "forecasted_impact",
+  "column_break_4",
+  "nearby_locations",
+  "impact_radius_km",
+  "metadata_section",
+  "nvdb_url",
+  "last_synced",
+  "column_break_5",
+  "data_source",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "project_info_section",
+   "fieldtype": "Section Break",
+   "label": "Project Information"
+  },
+  {
+   "fieldname": "project_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Project ID",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "project_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Project Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "project_description",
+   "fieldtype": "Text Editor",
+   "label": "Project Description"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "county",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "County Code"
+  },
+  {
+   "fieldname": "county_name",
+   "fieldtype": "Data",
+   "label": "County Name"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Planning\nIn Progress\nCompleted\nOn Hold\nCancelled"
+  },
+  {
+   "fieldname": "location_section",
+   "fieldtype": "Section Break",
+   "label": "Location Details"
+  },
+  {
+   "fieldname": "road_number",
+   "fieldtype": "Data",
+   "label": "Road Number"
+  },
+  {
+   "fieldname": "road_name",
+   "fieldtype": "Data",
+   "label": "Road Name"
+  },
+  {
+   "fieldname": "municipality",
+   "fieldtype": "Data",
+   "label": "Municipality"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "latitude",
+   "fieldtype": "Float",
+   "label": "Latitude",
+   "precision": "6"
+  },
+  {
+   "fieldname": "longitude",
+   "fieldtype": "Float",
+   "label": "Longitude",
+   "precision": "6"
+  },
+  {
+   "fieldname": "geometry_data",
+   "fieldtype": "Long Text",
+   "label": "Geometry Data (GeoJSON)"
+  },
+  {
+   "fieldname": "project_details_section",
+   "fieldtype": "Section Break",
+   "label": "Project Details"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date"
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date"
+  },
+  {
+   "fieldname": "estimated_cost",
+   "fieldtype": "Currency",
+   "label": "Estimated Cost (NOK)"
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "project_type",
+   "fieldtype": "Select",
+   "label": "Project Type",
+   "options": "New Road\nRoad Expansion\nMaintenance\nTunnel\nBridge\nIntersection\nOther"
+  },
+  {
+   "fieldname": "project_phase",
+   "fieldtype": "Select",
+   "label": "Project Phase",
+   "options": "Concept Study\nPlanning\nDesign\nConstruction\nCompleted"
+  },
+  {
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "label": "Priority",
+   "options": "Low\nMedium\nHigh\nCritical"
+  },
+  {
+   "fieldname": "strategic_section",
+   "fieldtype": "Section Break",
+   "label": "Strategic Analysis"
+  },
+  {
+   "fieldname": "strategic_value",
+   "fieldtype": "Select",
+   "label": "Strategic Value",
+   "options": "Very Low\nLow\nMedium\nHigh\nVery High"
+  },
+  {
+   "fieldname": "forecasted_impact",
+   "fieldtype": "Text Editor",
+   "label": "Forecasted Impact"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "nearby_locations",
+   "fieldtype": "Text",
+   "label": "Nearby Locations/Assets"
+  },
+  {
+   "fieldname": "impact_radius_km",
+   "fieldtype": "Float",
+   "label": "Impact Radius (km)",
+   "precision": "1"
+  },
+  {
+   "fieldname": "metadata_section",
+   "fieldtype": "Section Break",
+   "label": "Metadata"
+  },
+  {
+   "fieldname": "nvdb_url",
+   "fieldtype": "Data",
+   "label": "NVDB URL"
+  },
+  {
+   "fieldname": "last_synced",
+   "fieldtype": "Datetime",
+   "label": "Last Synced"
+  },
+  {
+   "fieldname": "column_break_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "data_source",
+   "fieldtype": "Data",
+   "default": "NVDB API",
+   "label": "Data Source"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Text Editor",
+   "label": "Notes"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-01-14 18:44:00.000000",
+ "modified_by": "Administrator",
+ "module": "Assist Tools",
+ "name": "Road Project",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

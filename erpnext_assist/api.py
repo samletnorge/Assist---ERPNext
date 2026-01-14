@@ -720,3 +720,120 @@ def post_rental_listing(
             "error": str(e),
             "message": "Failed to post asset for rental"
         }
+
+
+@frappe.whitelist()
+def fetch_vegvesen_road_projects(
+    county: str = None,
+    sync_to_erpnext: bool = True,
+    update_existing: bool = False
+) -> Dict[str, Any]:
+    """
+    Fetch road projects from Vegvesen NVDB API and optionally sync to ERPNext.
+    
+    Args:
+        county: Optional county code to filter projects (e.g., '9745')
+        sync_to_erpnext: If True, creates/updates Road Project records
+        update_existing: If True, updates existing projects with new data
+    
+    Returns:
+        Dictionary with fetched projects and sync status
+    """
+    try:
+        from erpnext_assist.mcp_server.server import track_vegvesen_road_projects
+        
+        if isinstance(sync_to_erpnext, str):
+            sync_to_erpnext = sync_to_erpnext.lower() == "true"
+        if isinstance(update_existing, str):
+            update_existing = update_existing.lower() == "true"
+        
+        result = track_vegvesen_road_projects(
+            county=county,
+            sync_to_erpnext=sync_to_erpnext,
+            update_existing=update_existing
+        )
+        
+        return result
+    except Exception as e:
+        frappe.log_error(f"Vegvesen road projects fetch error: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to fetch road projects from Vegvesen"
+        }
+
+
+@frappe.whitelist()
+def get_road_projects_map(
+    county: str = None,
+    strategic_value: str = None
+) -> Dict[str, Any]:
+    """
+    Get road projects formatted for map display.
+    
+    Args:
+        county: Optional county code filter
+        strategic_value: Optional strategic value filter (Very Low, Low, Medium, High, Very High)
+    
+    Returns:
+        Dictionary with map data for road projects
+    """
+    try:
+        from erpnext_assist.assist_tools.doctype.road_project.road_project import get_projects_for_map
+        
+        projects = get_projects_for_map(county=county, strategic_value=strategic_value)
+        
+        return {
+            "success": True,
+            "projects": projects,
+            "count": len(projects),
+            "message": f"Retrieved {len(projects)} road project(s) for map display"
+        }
+    except Exception as e:
+        frappe.log_error(f"Get road projects map error: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to get road projects for map"
+        }
+
+
+@frappe.whitelist()
+def analyze_road_project_impact(
+    project_id: str,
+    radius_km: float = 10.0
+) -> Dict[str, Any]:
+    """
+    Analyze the impact of a road project on nearby locations and assets.
+    
+    Args:
+        project_id: Road Project ID
+        radius_km: Search radius in kilometers (default 10km)
+    
+    Returns:
+        Dictionary with impact analysis
+    """
+    try:
+        from erpnext_assist.assist_tools.doctype.road_project.road_project import analyze_project_impact
+        
+        result = analyze_project_impact(project_id=project_id, radius_km=float(radius_km))
+        
+        if "error" in result:
+            return {
+                "success": False,
+                "error": result["error"],
+                "message": "Failed to analyze project impact"
+            }
+        
+        return {
+            "success": True,
+            "impact_analysis": result,
+            "message": "Impact analysis completed successfully"
+        }
+    except Exception as e:
+        frappe.log_error(f"Road project impact analysis error: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to analyze road project impact"
+        }
