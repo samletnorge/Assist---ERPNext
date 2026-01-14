@@ -471,9 +471,75 @@ pip install pytesseract
 ## Documentation
 
 See the updated documentation:
-- `EXAMPLES.md` - Examples 8-11 cover these new tools
+- `EXAMPLES.md` - Examples 8-11 cover these new tools (including Road Project Tracking)
 - `README.md` - Updated with tool descriptions
 - `QUICKSTART.md` - Integration examples
+
+## Tool 8: Vegvesen Road Project Tracking & Strategic Forecasting 🛣️📍
+
+**Purpose**: Track road construction projects from Norwegian Public Roads Administration (Statens vegvesen), plot on maps, and forecast high-value locations
+
+**MCP Tools**: 
+- `track_vegvesen_road_projects()` - Fetch and sync projects from NVDB API
+- `plot_road_projects_on_map()` - Visualize projects on interactive maps
+- `forecast_location_value()` - Predict location value based on road infrastructure
+
+**API Endpoints**: 
+- `erpnext_assist.api.fetch_vegvesen_road_projects` - Fetch projects
+- `erpnext_assist.api.get_road_projects_map` - Get map data
+- `erpnext_assist.api.analyze_road_project_impact` - Analyze project impact
+
+**DocType Created**:
+- `Road Project` - Stores comprehensive road project information
+
+**Features**:
+- Integration with Vegvesen NVDB API
+- Automatic strategic value calculation
+- Map plotting with GeoJSON support
+- Impact analysis on nearby warehouses and assets
+- Location value forecasting for strategic planning
+- Filter by county, project type, and strategic value
+- Track estimated costs and timelines
+- Identify high-value areas before competition
+
+**Road Project Fields**:
+- Project identification (ID, name, description)
+- Location data (county, municipality, coordinates, geometry)
+- Project details (dates, cost, type, phase, priority)
+- Strategic analysis (value, impact forecast, nearby locations)
+- Metadata (NVDB URL, sync timestamp, data source)
+
+**Parameters for `track_vegvesen_road_projects()`**:
+- `county` (str, optional): County code filter (e.g., '9745')
+- `sync_to_erpnext` (bool): Create/update Road Project records
+- `update_existing` (bool): Update existing projects with new data
+
+**Parameters for `forecast_location_value()`**:
+- `latitude` (float): Location latitude
+- `longitude` (float): Location longitude
+- `search_radius_km` (float): Search radius for nearby projects
+
+**Use Cases**:
+1. **Warehouse Site Selection**: Identify optimal locations near future road infrastructure
+2. **Property Investment**: Forecast value appreciation due to new roads
+3. **Logistics Planning**: Plan routes based on upcoming road improvements
+4. **Strategic Planning**: Make data-driven expansion decisions
+5. **Competitive Advantage**: Secure high-value locations before market awareness
+
+**Value Calculation**:
+The tool automatically calculates strategic value based on:
+- Project priority (Critical, High, Medium, Low)
+- Project type (New Road, Expansion, Bridge, Tunnel)
+- Estimated cost (scale indicator)
+- Proximity to existing assets
+- Infrastructure investment volume
+
+**Integration with ERPNext**:
+- Links to Warehouse locations
+- Analyzes impact on existing assets
+- Tracks project updates via NVDB sync
+- Supports GeoJSON for map visualization
+- Provides strategic recommendations
 
 ## Future Enhancements
 
@@ -482,6 +548,7 @@ Potential improvements for these tools:
 2. **Price Comparison**: Historical price tracking, price alerts
 3. **Voice Queries**: Multi-language support, context awareness
 4. **Pickup Routes**: Real-time traffic integration, driver app
+5. **Road Projects**: Real-time NVDB API integration, automatic alerts on project updates
 
 ## Feedback
 
