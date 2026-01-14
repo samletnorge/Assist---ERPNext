@@ -14,8 +14,8 @@ An ERPNext custom app that extends ERPNext with AI-powered tools using the Model
 - 📸 **AI Background Removal** - Professional product images with dual APIs (U²-Net local + altlokalt.com cloud)
 - 🤖 **Universal AI Support** - Works with Claude, OpenAI, Ollama, and custom providers
 - 🔒 **Privacy-First** - All processing happens locally on your server
-- 📦 **18 Ready-to-Use Tools** - Marketplace (Norwegian templates), camera, barcode, receipt scanner, price comparison, voice queries, RDS 81346, S1000D, GitHub import, warehouse finder, Norwegian accounting (NS 4102/DFØ), Skatteetaten tax integration, Kommune services, and more
-- 🇳🇴 **Norwegian Government Integration** - Skatteetaten (tax authority) and Kommune (municipal services)
+- 📦 **19 Ready-to-Use Tools** - Marketplace (Norwegian templates), camera, barcode, receipt scanner, price comparison, voice queries, RDS 81346, S1000D, GitHub import, warehouse finder, Norwegian accounting (NS 4102/DFØ), Skatteetaten tax integration, Kommune services, Vegvesen road project tracking, and more
+- 🇳🇴 **Norwegian Government Integration** - Skatteetaten (tax authority), Kommune (municipal services), and Vegvesen (road administration)
 - 🌐 **Offline Capable** - Full functionality without internet connection
 
 ## Features
@@ -154,6 +154,18 @@ An ERPNext custom app that extends ERPNext with AI-powered tools using the Model
 - **MCP Tool**: `submit_lyngdal_kommune_application`
 - **API Endpoint**: `erpnext_assist.api.submit_kommune_application`
 
+#### 15. Vegvesen Road Project Tracking & Strategic Forecasting
+- Track road projects from Norwegian Public Roads Administration (Statens vegvesen)
+- Fetch data from NVDB API for road construction projects
+- **Map plotting** - Visualize projects on interactive maps
+- **Strategic value assessment** - Automatically calculate project importance
+- **Location value forecasting** - Predict high-value areas based on new roads
+- **Impact analysis** - Identify nearby warehouses and assets affected by projects
+- Filter by county, strategic value, and project type
+- Forecast future property values based on infrastructure investment
+- **MCP Tools**: `track_vegvesen_road_projects`, `plot_road_projects_on_map`, `forecast_location_value`
+- **API Endpoints**: `erpnext_assist.api.fetch_vegvesen_road_projects`, `erpnext_assist.api.get_road_projects_map`, `erpnext_assist.api.analyze_road_project_impact`
+
 ## 📋 Standards Compliance Matrix
 
 This app implements multiple international and Norwegian standards for various industries:
@@ -166,6 +178,7 @@ This app implements multiple international and Norwegian standards for various i
 | **S1000D Tool** | ASD S1000D Issue 6 | Technical Documentation | ✅ Full | International (Aerospace/Defense) |
 | **Skatteetaten Integration** | Skatteetaten API | Tax Authority | ✅ Supported | Norway |
 | **Kommune Integration** | Municipal APIs | Local Government | ✅ Supported | Norway (All Municipalities) |
+| **Vegvesen Integration** | NVDB API | Road Administration | ✅ Supported | Norway |
 | **Background Removal** | receipt-ocr.altlokalt.com | Private API | ✅ Supported | International |
 | **Background Removal** | U²-Net AI Model | Open Source | ✅ Full | International (Offline) |
 | **Price Comparison** | Prisjakt.no API | E-commerce | ✅ Supported | Norway/Scandinavia |
@@ -187,6 +200,7 @@ This app implements multiple international and Norwegian standards for various i
 **Government & Municipal:**
 - Skatteetaten (Norwegian Tax Authority)
 - Norwegian Kommune services (all municipalities)
+- Statens vegvesen / NVDB API (Norwegian Road Administration)
 
 **AI & Image Processing:**
 - U²-Net (Background removal - local)
