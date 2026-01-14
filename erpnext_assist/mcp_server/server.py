@@ -1815,33 +1815,74 @@ def track_vegvesen_road_projects(
         if county:
             params['fylke'] = county
         
-        # For demonstration, we'll create sample data since the real API requires specific knowledge
-        # In production, this would fetch from: f"{api_base}/vegobjekter/[object_type_id]"
+        # TODO: Integration with real NVDB API
+        # The following is a mock implementation for demonstration purposes.
+        # In production, this should be replaced with actual NVDB API calls:
+        # 1. Determine the correct NVDB object type ID for road projects from datakatalog
+        # 2. Use endpoint: f"{api_base}/vegobjekter/{object_type_id}" with appropriate filters
+        # 3. Parse the JSON response and extract relevant project data
+        # 4. Handle pagination if the API returns large result sets
+        # Set USE_MOCK_DATA=false in environment to enable real API integration
+        
+        use_mock = os.environ.get("USE_MOCK_VEGVESEN_DATA", "true").lower() == "true"
         
         projects_data = []
         synced_count = 0
         updated_count = 0
         errors = []
         
-        # Simulate API call (in production, replace with actual API call)
-        # Example: response = requests.get(f"{api_base}/vegobjekter/[road_project_type_id]", params=params)
-        
-        # For now, create a sample project based on the URL pattern
-        sample_project = {
-            "id": f"RV-{county or '9745'}-001",
-            "name": f"Road Project in County {county or '9745'}",
-            "description": "Sample road project from Vegvesen NVDB API",
-            "county": county or "9745",
-            "county_name": "Vestfold og Telemark",
-            "status": "Planning",
-            "latitude": 59.1234,
-            "longitude": 10.2345,
-            "estimated_cost": 500000000,
-            "project_type": "Road Expansion",
-            "priority": "High"
-        }
-        
-        projects_data.append(sample_project)
+        if use_mock:
+            # Mock data for demonstration - will be replaced with real API integration
+            # County name lookup for common Norwegian counties
+            county_names = {
+                "9745": "Vestfold og Telemark",
+                "9750": "Agder",
+                "9742": "Rogaland",
+                "9746": "Vestland",
+                "9748": "Trøndelag",
+                "9749": "Nordland",
+                "9751": "Troms og Finnmark",
+                "9743": "Møre og Romsdal",
+                "9744": "Innlandet",
+                "9747": "Viken"
+            }
+            
+            county_code = county or "9745"
+            sample_project = {
+                "id": f"RV-{county_code}-001",
+                "name": f"Road Project in County {county_code}",
+                "description": "Sample road project from Vegvesen NVDB API (mock data)",
+                "county": county_code,
+                "county_name": county_names.get(county_code, "Unknown County"),
+                "status": "Planning",
+                "latitude": 59.1234,
+                "longitude": 10.2345,
+                "estimated_cost": 500000000,
+                "project_type": "Road Expansion",
+                "priority": "High"
+            }
+            
+            projects_data.append(sample_project)
+        else:
+            # Real NVDB API integration (to be implemented)
+            # This section would contain the actual API calls when USE_MOCK_VEGVESEN_DATA=false
+            try:
+                # Example implementation (requires NVDB API research):
+                # response = requests.get(f"{api_base}/vegobjekter/{object_type_id}", params=params)
+                # projects_data = parse_nvdb_response(response.json())
+                frappe.log_error("Real NVDB API integration not yet implemented. Set USE_MOCK_VEGVESEN_DATA=true to use mock data.")
+                return {
+                    "success": False,
+                    "error": "Real NVDB API integration not yet implemented",
+                    "message": "Please set USE_MOCK_VEGVESEN_DATA=true to use mock data for testing"
+                }
+            except Exception as e:
+                frappe.log_error(f"NVDB API error: {str(e)}")
+                return {
+                    "success": False,
+                    "error": str(e),
+                    "message": "Failed to fetch from real NVDB API"
+                }
         
         # Sync to ERPNext if requested
         if sync_to_erpnext:

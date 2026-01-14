@@ -104,12 +104,13 @@ class RoadProject(Document):
         
         return map_data
     
-    def analyze_nearby_impact(self, radius_km: float = 10.0) -> Dict[str, Any]:
+    def analyze_nearby_impact(self, radius_km: float = 10.0, update_fields: bool = False) -> Dict[str, Any]:
         """
         Analyze potential impact on nearby warehouses, properties, and assets.
         
         Args:
             radius_km: Search radius in kilometers (default 10km)
+            update_fields: If True, updates nearby_locations and impact_radius_km fields (default False)
         
         Returns:
             Dictionary with impact analysis
@@ -138,8 +139,8 @@ class RoadProject(Document):
                         "distance_km": round(distance, 2)
                     })
         
-        # Update nearby_locations field
-        if nearby_warehouses:
+        # Optionally update nearby_locations field (side effect separated from calculation)
+        if update_fields and nearby_warehouses:
             location_text = "\n".join([
                 f"{w['warehouse_name']} ({w['distance_km']} km)"
                 for w in nearby_warehouses
