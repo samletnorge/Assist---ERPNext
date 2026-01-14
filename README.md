@@ -14,7 +14,7 @@ An ERPNext custom app that extends ERPNext with AI-powered tools using the Model
 - 📸 **AI Background Removal** - Professional product images with dual APIs (U²-Net local + altlokalt.com cloud)
 - 🤖 **Universal AI Support** - Works with Claude, OpenAI, Ollama, and custom providers
 - 🔒 **Privacy-First** - All processing happens locally on your server
-- 📦 **18 Ready-to-Use Tools** - Marketplace (Norwegian templates), camera, barcode, receipt scanner, price comparison, voice queries, RDS 81346, S1000D, GitHub import, warehouse finder, Norwegian accounting (NS 4102/DFØ), Skatteetaten tax integration, Kommune services, and more
+- 📦 **19 Ready-to-Use Tools** - Marketplace (Norwegian templates), camera, barcode, receipt scanner, price comparison, voice queries, RDS 81346, S1000D, GitHub import, warehouse finder, Norwegian accounting (NS 4102/DFØ), Skatteetaten tax integration, Kommune services, daily briefing with web content, and more
 - 🇳🇴 **Norwegian Government Integration** - Skatteetaten (tax authority) and Kommune (municipal services)
 - 🌐 **Offline Capable** - Full functionality without internet connection
 
@@ -153,6 +153,29 @@ An ERPNext custom app that extends ERPNext with AI-powered tools using the Model
 - Phone control support for municipal portals
 - **MCP Tool**: `submit_lyngdal_kommune_application`
 - **API Endpoint**: `erpnext_assist.api.submit_kommune_application`
+
+#### 15. Daily Briefing Tool
+- Generate comprehensive daily status briefings
+- **ERPNext Status Updates**:
+  - Pending tasks and ToDos
+  - Unread notifications
+  - Key business metrics (sales orders, purchase orders, stock levels)
+- **Web Content Integration**:
+  - Fetch and summarize content from any URL
+  - Perfect for monitoring news, health articles, industry updates
+  - Supports Norwegian and international sources
+- **Customizable briefing components**:
+  - Enable/disable specific sections (tasks, notifications, metrics)
+  - Set summary length preferences
+  - Multiple URL sources in one briefing
+- **MCP Tool**: `get_daily_briefing`
+
+Use cases:
+- Daily morning briefing with pending work and system status
+- Monitor industry-relevant content (e.g., health articles from illvit.no)
+- Stay updated with Norwegian news and information
+- Track business KPIs and operational metrics
+- Combine internal ERPNext data with external web content
 
 ## 📋 Standards Compliance Matrix
 
@@ -384,6 +407,48 @@ from erpnext_assist.mcp_server.server import scan_barcode_for_location
 
 result = scan_barcode_for_location(barcode="1234567890")
 # Returns warehouse locations and stock levels
+```
+
+#### Get Daily Briefing
+```python
+from erpnext_assist.mcp_server.server import get_daily_briefing
+
+# Get comprehensive daily briefing
+result = get_daily_briefing(
+    include_tasks=True,
+    include_notifications=True,
+    include_metrics=True,
+    web_urls=[
+        "https://illvit.no/helse/ny-oppdagelse-bare-10-minutter-med-enkel-aktivitet-kan-kanskje-styrke-kroppens-eget-forsvar-mot-kreft"
+    ],
+    max_summary_length=500
+)
+
+# Returns:
+# {
+#     "success": True,
+#     "date": "Monday, January 15, 2024",
+#     "erpnext_status": {
+#         "pending_tasks": {"count": 5, "tasks": [...]},
+#         "notifications": {"count": 3, "recent": [...]},
+#         "metrics": {
+#             "open_sales_orders": 12,
+#             "pending_purchase_orders": 5,
+#             "low_stock_items": 8
+#         }
+#     },
+#     "web_content": [
+#         {
+#             "url": "https://illvit.no/helse/...",
+#             "title": "Ny oppdagelse: Bare 10 minutter...",
+#             "summary": "Article content summary..."
+#         }
+#     ],
+#     "summary": "Daily Briefing for Monday, January 15, 2024. You have 5 pending tasks..."
+# }
+
+# Use with AI assistants through MCP
+# The AI can automatically fetch and summarize relevant information for you
 ```
 
 ## MCP Client Configuration
