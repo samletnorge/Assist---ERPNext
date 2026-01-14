@@ -49,3 +49,4 @@ logs/
 # Temporary files
 *.tmp
 .cache/
+test_daily_briefing.py

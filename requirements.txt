@@ -3,6 +3,7 @@ mcp[cli]>=1.0.0
 requests
 rembg>=2.0.0
 pillow>=10.0.0
+beautifulsoup4>=4.12.0
 
 # Optional dependencies for extended features
 # Uncomment the following line to enable receipt OCR scanning

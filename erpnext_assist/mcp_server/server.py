@@ -9,8 +9,11 @@ both built-in tools and dynamically loaded user-drafted tools from the UI.
 import os
 import sys
 import json
+import requests
 from typing import Any, Dict, List, Optional
+from datetime import datetime
 from mcp.server.fastmcp import FastMCP
+from bs4 import BeautifulSoup
 
 # Initialize MCP server
 mcp = FastMCP("ERPNext Assist")
@@ -1778,6 +1781,260 @@ def submit_lyngdal_kommune_application(kommune: str, application_type: str, data
             "success": False,
             "error": str(e),
             "message": f"Failed to submit application to {kommune} Kommune"
+        }
+
+
+@mcp.tool()
+def get_daily_briefing(
+    include_tasks: bool = True,
+    include_notifications: bool = True,
+    include_metrics: bool = True,
+    web_urls: Optional[List[str]] = None,
+    max_summary_length: int = 500,
+    low_stock_threshold: int = 10
+) -> Dict[str, Any]:
+    """
+    Generate a daily briefing with ERPNext status updates and relevant information from web sources.
+    
+    Args:
+        include_tasks: Include pending tasks and ToDos (default: True)
+        include_notifications: Include recent notifications (default: True)
+        include_metrics: Include key business metrics (default: True)
+        web_urls: Optional list of URLs to fetch and summarize (e.g., news articles, health info)
+        max_summary_length: Maximum length for web content summaries (default: 500)
+        low_stock_threshold: Threshold for low stock alert (default: 10)
+    
+    Returns:
+        Dictionary with daily briefing including:
+        - ERPNext status (tasks, notifications, metrics)
+        - Summaries of web content from provided URLs
+        - Timestamp and user information
+    
+    Use cases:
+    - Daily morning briefing with pending work and system status
+    - Fetch and summarize relevant news or information
+    - Monitor business metrics and KPIs
+    - Stay updated with industry-relevant content (e.g., health articles, tech news)
+    
+    Example:
+        briefing = get_daily_briefing(
+            web_urls=["https://illvit.no/helse/ny-oppdagelse-bare-10-minutter-med-enkel-aktivitet-kan-kanskje-styrke-kroppens-eget-forsvar-mot-kreft"]
+        )
+    """
+    try:
+        import frappe
+        
+        # Helper function to safely get current user
+        def get_current_user():
+            try:
+                if hasattr(frappe, 'session') and hasattr(frappe.session, 'user'):
+                    return frappe.session.user
+            except:
+                pass
+            return "Guest"
+        
+        current_user = get_current_user()
+        
+        briefing = {
+            "success": True,
+            "timestamp": datetime.now().isoformat(),
+            "user": current_user,
+            "date": datetime.now().strftime("%A, %B %d, %Y"),
+            "erpnext_status": {},
+            "web_content": [],
+            "summary": ""
+        }
+        
+        # Gather ERPNext status information
+        if include_tasks and current_user != "Guest":
+            try:
+                # Get pending ToDos for current user
+                todos = frappe.get_all(
+                    "ToDo",
+                    filters={
+                        "status": ["in", ["Open", "Pending"]],
+                        "allocated_to": current_user
+                    },
+                    fields=["name", "description", "priority", "date"],
+                    order_by="priority desc, date asc",
+                    limit=10
+                )
+                briefing["erpnext_status"]["pending_tasks"] = {
+                    "count": len(todos),
+                    "tasks": todos
+                }
+            except Exception as e:
+                briefing["erpnext_status"]["pending_tasks"] = {
+                    "error": f"Could not fetch tasks: {str(e)}"
+                }
+        
+        if include_notifications and current_user != "Guest":
+            try:
+                # Get recent notifications
+                notifications = frappe.get_all(
+                    "Notification Log",
+                    filters={
+                        "for_user": current_user,
+                        "read": 0
+                    },
+                    fields=["subject", "type", "document_type", "document_name", "creation"],
+                    order_by="creation desc",
+                    limit=5
+                )
+                briefing["erpnext_status"]["notifications"] = {
+                    "count": len(notifications),
+                    "recent": notifications
+                }
+            except Exception as e:
+                briefing["erpnext_status"]["notifications"] = {
+                    "error": f"Could not fetch notifications: {str(e)}"
+                }
+        
+        if include_metrics:
+            try:
+                # Get some basic business metrics
+                metrics = {}
+                
+                # Count of open sales orders (if available)
+                try:
+                    open_sales_orders = frappe.db.count("Sales Order", {"status": "To Deliver and Bill"})
+                    metrics["open_sales_orders"] = open_sales_orders
+                except Exception:
+                    pass
+                
+                # Count of pending purchase orders
+                try:
+                    pending_purchase_orders = frappe.db.count("Purchase Order", {"status": ["in", ["To Receive and Bill", "To Receive"]]})
+                    metrics["pending_purchase_orders"] = pending_purchase_orders
+                except Exception:
+                    pass
+                
+                # Low stock items count - uses configurable threshold
+                try:
+                    low_stock_items = frappe.db.sql("""
+                        SELECT COUNT(*) as count
+                        FROM `tabBin`
+                        WHERE actual_qty < %s AND actual_qty > 0
+                    """, (low_stock_threshold,), as_dict=True)
+                    if low_stock_items:
+                        metrics["low_stock_items"] = low_stock_items[0].get("count", 0)
+                        metrics["low_stock_threshold"] = low_stock_threshold
+                except Exception:
+                    pass
+                
+                briefing["erpnext_status"]["metrics"] = metrics
+            except Exception as e:
+                briefing["erpnext_status"]["metrics"] = {
+                    "error": f"Could not fetch metrics: {str(e)}"
+                }
+        
+        # Fetch and summarize web content
+        if web_urls:
+            # Complete User-Agent string for better compatibility
+            user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            
+            for url in web_urls:
+                try:
+                    # Fetch the web page with proper headers
+                    response = requests.get(
+                        url, 
+                        timeout=10, 
+                        headers={'User-Agent': user_agent},
+                        verify=True  # Verify SSL certificates for security
+                    )
+                    response.raise_for_status()
+                    
+                    # Parse the HTML
+                    soup = BeautifulSoup(response.content, 'html.parser')
+                    
+                    # Extract title
+                    title = soup.find('title')
+                    title_text = title.get_text().strip() if title else "No title"
+                    
+                    # Extract main content - try common article selectors
+                    content_selectors = [
+                        'article',
+                        '[class*="article-content"]',
+                        '[class*="post-content"]',
+                        '[class*="entry-content"]',
+                        'main',
+                        '.content'
+                    ]
+                    
+                    content_text = ""
+                    for selector in content_selectors:
+                        content_element = soup.select_one(selector)
+                        if content_element:
+                            # Get all paragraph text
+                            paragraphs = content_element.find_all('p')
+                            content_text = ' '.join([p.get_text().strip() for p in paragraphs])
+                            break
+                    
+                    # Fallback to first paragraphs if no content found
+                    # Limit based on estimated paragraph length to approximate max_summary_length
+                    if not content_text:
+                        paragraphs = soup.find_all('p')
+                        max_paragraphs = max(5, max_summary_length // 100)  # Estimate ~100 chars per paragraph
+                        content_text = ' '.join([p.get_text().strip() for p in paragraphs[:max_paragraphs]])
+                    
+                    # Truncate to max length at word boundary for better readability
+                    if len(content_text) > max_summary_length:
+                        # Find the last space before max_summary_length
+                        truncated = content_text[:max_summary_length]
+                        last_space = truncated.rfind(' ')
+                        if last_space > max_summary_length * 0.8:  # Only use word boundary if not too far back
+                            content_text = truncated[:last_space] + "..."
+                        else:
+                            content_text = truncated + "..."
+                    
+                    briefing["web_content"].append({
+                        "url": url,
+                        "title": title_text,
+                        "summary": content_text,
+                        "fetched_at": datetime.now().isoformat()
+                    })
+                    
+                except Exception as e:
+                    briefing["web_content"].append({
+                        "url": url,
+                        "error": f"Failed to fetch: {str(e)}"
+                    })
+        
+        # Generate overall summary
+        summary_parts = []
+        summary_parts.append(f"Daily Briefing for {briefing['date']}")
+        
+        if "pending_tasks" in briefing["erpnext_status"]:
+            task_count = briefing["erpnext_status"]["pending_tasks"].get("count", 0)
+            if task_count > 0:
+                summary_parts.append(f"You have {task_count} pending tasks.")
+        
+        if "notifications" in briefing["erpnext_status"]:
+            notif_count = briefing["erpnext_status"]["notifications"].get("count", 0)
+            if notif_count > 0:
+                summary_parts.append(f"{notif_count} unread notifications.")
+        
+        if "metrics" in briefing["erpnext_status"]:
+            metrics = briefing["erpnext_status"]["metrics"]
+            if metrics.get("open_sales_orders"):
+                summary_parts.append(f"{metrics['open_sales_orders']} open sales orders.")
+            if metrics.get("low_stock_items"):
+                summary_parts.append(f"{metrics['low_stock_items']} items running low on stock.")
+        
+        if briefing["web_content"]:
+            web_count = len([w for w in briefing["web_content"] if "error" not in w])
+            if web_count > 0:
+                summary_parts.append(f"Fetched {web_count} article(s) from the web.")
+        
+        briefing["summary"] = " ".join(summary_parts)
+        
+        return briefing
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Failed to generate daily briefing"
         }
 
 
